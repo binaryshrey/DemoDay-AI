@@ -32,8 +32,8 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
   };
 
   return (
-    <div className="isolate bg-white">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white [background:radial-gradient(120%_120%_at_50%_10%,#fff_30%,#ffab91_100%)]"></div>
+    <div className="isolate bg-gradient-to-b from-[#ffe4d9] to-[#ffab91]">
+      <div className="absolute inset-0 -z-10 h-full w-full [background:radial-gradient(120%_120%_at_50%_10%,rgba(255,255,255,0.8)_20%,rgba(255,171,145,0.3)_100%)]"></div>
       <div className="absolute h-1/2 -z-10 w-full bg-[radial-gradient(#e5e7eb_1px,transparent_2px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_100%,transparent_100%)]"></div>
       <div className="px-6 pt-6">
         <nav className="flex items-center justify-between" aria-label="Global">
@@ -46,10 +46,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
             </h4>
           </div>
           <div className="flex lg:hidden gap-4">
-            <div
-              className="p-1 pr-3 pl-3 rounded-full cursor-pointer"
-              style={{ backgroundColor: "var(--brand-secondary)" }}
-            >
+            <div className="p-1 pr-3 pl-3 rounded-full cursor-pointer bg-(--brand-secondary)">
               <Link
                 href={signInUrl}
                 className="text-sm font-semibold leading-6 text-white"
@@ -107,10 +104,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
                 Log in
               </Link>
               <Link href={signUpUrl}>
-                <div
-                  className="p-1 pr-3 pl-3 rounded-full cursor-pointer"
-                  style={{ backgroundColor: "var(--brand-secondary)" }}
-                >
+                <div className="p-1 pr-3 pl-3 rounded-full cursor-pointer bg-(--brand-secondary)">
                   <p className="text-sm font-semibold leading-6 text-white ">
                     Join DemoDay AI
                   </p>
@@ -196,14 +190,24 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
         <div className="relative py-24 sm:py-32 lg:pb-40">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-5xl text-center">
-              <h1 className="text-xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                Practice Your Pitch, Elevate Your Impact <br /> and Secure Your
-                Success.
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl leading-tight sm:leading-tight">
+                Practice Your{" "}
+                <span className="relative inline-block px-2 sm:px-3">
+                  <span className="absolute inset-0 bg-(--brand-secondary) rounded-lg sm:rounded-xl -z-10 sm:p-6"></span>
+                  Pitch
+                </span>
+                , Elevate Your Impact and Secure Your{" "}
+                <span className="relative inline-block px-2 sm:px-3">
+                  <span className="absolute inset-0 bg-(--brand-secondary) rounded-lg sm:rounded-xl -z-10 sm:p-6"></span>
+                  Success.
+                </span>
               </h1>
 
-              <p className="mt-6 text-xs sm:text-lg leading-8 text-gray-600">
-                Sharpen your pitch with real-time AI voice feedback trained on
-                <br /> YCombinator startup knowledge and investor insights.
+              <p className="mt-6 text-sm sm:text-lg leading-6 sm:leading-8 text-gray-700 px-4 sm:px-0">
+                Sharpen your pitch with real-time AI voice feedback trained on{" "}
+                <br className="hidden sm:block" />
+                YCombinator startup knowledge base and investor insights to
+                secure funding.
               </p>
             </div>
             <div
@@ -212,19 +216,14 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
               className="mt-10 flex items-center justify-center gap-x-6"
             >
               {loadingButton && (
-                <Button
-                  className="text-white"
-                  style={{ backgroundColor: "var(--brand-secondary)" }}
-                  disabled
-                >
+                <Button className="text-white bg-(--brand-secondary)" disabled>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Get Started
                 </Button>
               )}
               {!loadingButton && (
                 <Button
-                  style={{ backgroundColor: "var(--brand-secondary)" }}
+                  className="cursor-pointer bg-(--brand-secondary)"
                   onClick={handleGetStarted}
-                  className="cursor-pointer"
                 >
                   Get Started
                 </Button>
