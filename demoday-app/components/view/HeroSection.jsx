@@ -5,21 +5,14 @@ import { Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
-import { RiCloseCircleFill, RiCheckboxCircleFill } from "@remixicon/react";
 import {
   GITHUB_URI,
   LINKEDIN_URI,
   BETTERSTACK_URI,
 } from "../../utils/Constants";
-import {
-  RiMenuLine,
-  RiCloseFill,
-  RiArrowRightLine,
-  RiCheckLine,
-  RiCloseLine,
-} from "@remixicon/react";
+import { RiMenuLine, RiCloseFill } from "@remixicon/react";
 
-const HeroSection = () => {
+export default function HeroSection({ user, signInUrl, signUpUrl }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loadingButton, setLoadingButton] = useState(false);
 
@@ -32,32 +25,10 @@ const HeroSection = () => {
 
   const handleGetStarted = () => {
     setLoadingButton(true);
-    //  setTimeout(() => {
-    //    setLoadingButton(false);
-    //    if (user != null) {
-    //      if (Object.keys(user).length !== 0) {
-    //        localStorage.setItem("email", JSON.stringify(user.email));
-    //        navigate("/upload-album");
-    //      }
-    //    } else {
-    //      navigate("/login");
-    //    }
-    //  }, 1000);
-  };
-
-  const handleLogin = () => {
-    setLoadingLogin(true);
-    //  setTimeout(() => {
-    //    setLoadingLogin(false);
-    //    if (user != null) {
-    //      if (Object.keys(user).length !== 0) {
-    //        localStorage.setItem("email", JSON.stringify(user.email));
-    //        navigate("/upload-album");
-    //      }
-    //    } else {
-    //      navigate("/login");
-    //    }
-    //  }, 1000);
+    setTimeout(() => {
+      setLoadingButton(false);
+      window.location.href = signInUrl;
+    }, 800);
   };
 
   return (
@@ -80,7 +51,7 @@ const HeroSection = () => {
               style={{ backgroundColor: "var(--brand-secondary)" }}
             >
               <Link
-                href="/signup"
+                href={signInUrl}
                 className="text-sm font-semibold leading-6 text-white"
               >
                 Join DemoDay AI
@@ -130,12 +101,12 @@ const HeroSection = () => {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end">
             <div className="flex gap-4 justify-center items-center">
               <Link
-                href="/login"
+                href={signInUrl}
                 className="text-sm font-semibold leading-6 text-gray-900"
               >
                 Log in
               </Link>
-              <Link href="/signup">
+              <Link href={signUpUrl}>
                 <div
                   className="p-1 pr-3 pl-3 rounded-full cursor-pointer"
                   style={{ backgroundColor: "var(--brand-secondary)" }}
@@ -204,7 +175,7 @@ const HeroSection = () => {
                 </div>
                 <div className="py-6">
                   <Link
-                    href="/login"
+                    href={signInUrl}
                     className="-mx-3 block rounded-lg py-2.5 px-3 text-base font-semibold leading-6 text-gray-900 hover:bg-gray-400/10"
                   >
                     Log in
@@ -241,7 +212,11 @@ const HeroSection = () => {
               className="mt-10 flex items-center justify-center gap-x-6"
             >
               {loadingButton && (
-                <Button className="dark" disabled>
+                <Button
+                  className="text-white"
+                  style={{ backgroundColor: "var(--brand-secondary)" }}
+                  disabled
+                >
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Get Started
                 </Button>
               )}
@@ -249,6 +224,7 @@ const HeroSection = () => {
                 <Button
                   style={{ backgroundColor: "var(--brand-secondary)" }}
                   onClick={handleGetStarted}
+                  className="cursor-pointer"
                 >
                   Get Started
                 </Button>
@@ -278,6 +254,4 @@ const HeroSection = () => {
       <div id="features-section"></div>
     </div>
   );
-};
-
-export default HeroSection;
+}
