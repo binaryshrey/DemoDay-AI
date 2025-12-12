@@ -206,8 +206,8 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
               <p className="mt-6 text-sm sm:text-lg leading-6 sm:leading-8 text-gray-700 px-4 sm:px-0">
                 Sharpen your pitch with real-time AI voice feedback trained on{" "}
                 <br className="hidden sm:block" />
-                YCombinator startup knowledge base and investor insights to
-                secure funding.
+                <strong>YCombinator</strong> startup knowledge base and investor
+                insights to secure funding.
               </p>
             </div>
             <div
