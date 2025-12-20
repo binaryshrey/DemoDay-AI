@@ -33,7 +33,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
 
   return (
     <div className="isolate bg-gradient-to-b from-[#ffe4d9] to-[#ffab91]">
-      <div className="absolute inset-0 -z-10 h-full w-full [background:radial-gradient(120%_120%_at_50%_10%,rgba(255,255,255,0.8)_20%,rgba(255,171,145,0.3)_100%)]"></div>
+      <div className="absolute inset-0 -z-10 h-full w-full [background:radial-gradient(120%_120%_at_50%_10%,rgba(255,255,255,0.5)_20%,rgba(255,171,145,0.3)_100%)]"></div>
       <div className="absolute h-1/2 -z-10 w-full bg-[radial-gradient(#e5e7eb_1px,transparent_2px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_100%,transparent_100%)]"></div>
       <div className="px-6 pt-6">
         <nav className="flex items-center justify-between" aria-label="Global">
@@ -199,7 +199,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
                 , Elevate Your Impact and Secure Your{" "}
                 <span className="relative inline-block px-2 sm:px-3">
                   <span className="absolute inset-0 bg-(--brand-secondary) rounded-lg sm:rounded-xl -z-10 sm:p-6"></span>
-                  Success.
+                  Success!
                 </span>
               </h1>
 
