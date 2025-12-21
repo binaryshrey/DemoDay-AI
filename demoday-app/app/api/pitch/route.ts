@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionQueue } from "@/lib/sessionQueue";
 
 export async function GET(request: NextRequest) {
   const anamApiKey = process.env.ANAM_INVESTOR_API_KEY;
@@ -22,38 +23,71 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(anamAuthURI, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${anamApiKey}`,
-      },
-      body: JSON.stringify({
-        personaConfig: {
-          avatarId: avatarInvestorId,
-          enableAudioPassthrough: true,
+    // Use queue to manage concurrency
+    const queueStatus = sessionQueue.getQueueStatus();
+    console.log(`[Pitch API] Queue status:`, queueStatus);
+
+    // Store the token from inside the queue callback
+    let anamToken: string | null = null;
+
+    // Wait for our turn in the queue
+    const sessionId = await sessionQueue.requestSession("pitch", async () => {
+      const response = await fetch(anamAuthURI, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${anamApiKey}`,
         },
-      }),
+        body: JSON.stringify({
+          personaConfig: {
+            avatarId: avatarInvestorId,
+            enableAudioPassthrough: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error("Anam API error:", error);
+        throw new Error("Failed to get Anam session token");
+      }
+
+      const data = await response.json();
+      anamToken = data.sessionToken; // Store the token
+      return data.sessionToken;
     });
 
-    if (!response.ok) {
-      const error = await response.text();
-      console.error("Anam API error:", error);
-      return NextResponse.json(
-        { error: "Failed to get Anam session token" },
-        { status: 500 }
-      );
-    }
-
-    const data = await response.json();
+    // Return the token and session ID for cleanup
     return NextResponse.json({
-      anamSessionToken: data.sessionToken,
+      anamSessionToken: anamToken,
       elevenLabsAgentId: elevenLabsInvestorAgentId,
+      queueSessionId: sessionId, // For cleanup
     });
   } catch (error) {
     console.error("Config error:", error);
     return NextResponse.json(
       { error: "Failed to get config" },
+      { status: 500 }
+    );
+  }
+}
+
+// Add endpoint to release session when done
+export async function DELETE(request: NextRequest) {
+  try {
+    const { sessionId } = await request.json();
+    if (sessionId) {
+      sessionQueue.releaseSession(sessionId);
+      return NextResponse.json({ success: true });
+    }
+    return NextResponse.json(
+      { error: "No session ID provided" },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error("Error releasing session:", error);
+    return NextResponse.json(
+      { error: "Failed to release session" },
       { status: 500 }
     );
   }

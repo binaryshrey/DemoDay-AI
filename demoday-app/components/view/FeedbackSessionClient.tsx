@@ -15,6 +15,7 @@ import { connectElevenLabs, stopElevenLabs } from "../../lib/elevenlabs";
 interface Config {
   anamSessionToken: string;
   elevenLabsAgentId: string;
+  queueSessionId?: string; // For releasing the queue slot
   error?: string;
 }
 
@@ -48,6 +49,7 @@ export default function FeedbackSessionClient({
   const configRef = useRef<Config | null>(null);
   const agentAudioInputStreamRef = useRef<any>(null);
   const anamSessionIdRef = useRef<string | null>(null);
+  const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
   const hasInitialized = useRef(false);
 
   // Initialize session on mount - now safe with separate API key
@@ -72,6 +74,12 @@ export default function FeedbackSessionClient({
 
         if (!res.ok) {
           throw new Error(config.error || "Failed to get config");
+        }
+
+        // Store the queue session ID for cleanup
+        if (config.queueSessionId) {
+          queueSessionIdRef.current = config.queueSessionId;
+          console.log("[Queue] Acquired session slot:", config.queueSessionId);
         }
 
         console.log(
@@ -152,8 +160,42 @@ export default function FeedbackSessionClient({
       if (anamClientRef.current) {
         anamClientRef.current.stopStreaming();
       }
+      // Release the queue session slot
+      releaseQueueSession();
     };
   }, []);
+
+  // Release queue session slot
+  const releaseQueueSession = async () => {
+    const sessionId = queueSessionIdRef.current;
+    if (!sessionId) {
+      console.log("[Queue] No session ID to release");
+      return;
+    }
+
+    try {
+      console.log("[Queue] Releasing session slot:", sessionId);
+      const response = await fetch("/api/feedback", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (response.ok) {
+        console.log("[Queue] Session released successfully");
+        queueSessionIdRef.current = null;
+      } else {
+        console.error(
+          "[Queue] Failed to release session:",
+          await response.text()
+        );
+      }
+    } catch (err) {
+      console.error("[Queue] Error releasing session:", err);
+    }
+  };
 
   const addMessage = (role: "user" | "agent" | "system", text: string) => {
     setMessages((prev) => [...prev, { role, text }]);
@@ -241,6 +283,9 @@ export default function FeedbackSessionClient({
 
     setShowVideo(false);
     setIsConnected(false);
+
+    // Release the queue session slot immediately
+    await releaseQueueSession();
 
     // Change message
     setEndingMessage("Returning to dashboard...");

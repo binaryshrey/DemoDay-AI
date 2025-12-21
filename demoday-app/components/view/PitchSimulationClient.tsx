@@ -15,6 +15,7 @@ import { connectElevenLabs, stopElevenLabs } from "../../lib/elevenlabs";
 interface Config {
   anamSessionToken: string;
   elevenLabsAgentId: string;
+  queueSessionId?: string; // For releasing the queue slot
   error?: string;
 }
 
@@ -51,6 +52,7 @@ export default function PitchSimulationClient({
   const configRef = useRef<Config | null>(null);
   const agentAudioInputStreamRef = useRef<any>(null);
   const anamSessionIdRef = useRef<string | null>(null);
+  const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
 
   // Initialize Anam session on mount (pre-warm the avatar)
   useEffect(() => {
@@ -74,6 +76,12 @@ export default function PitchSimulationClient({
 
         if (!res.ok) {
           throw new Error(config.error || "Failed to get config");
+        }
+
+        // Store the queue session ID for cleanup
+        if (config.queueSessionId) {
+          queueSessionIdRef.current = config.queueSessionId;
+          console.log("[Queue] Acquired session slot:", config.queueSessionId);
         }
 
         console.log("[Anam] Pre-initializing avatar with fresh session token");
@@ -169,6 +177,8 @@ export default function PitchSimulationClient({
       if (anamClientRef.current) {
         anamClientRef.current.stopStreaming();
       }
+      // Release the queue session slot
+      releaseQueueSession();
     };
   }, []);
 
@@ -180,6 +190,38 @@ export default function PitchSimulationClient({
     return `${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Release queue session slot
+  const releaseQueueSession = async () => {
+    const sessionId = queueSessionIdRef.current;
+    if (!sessionId) {
+      console.log("[Queue] No session ID to release");
+      return;
+    }
+
+    try {
+      console.log("[Queue] Releasing session slot:", sessionId);
+      const response = await fetch("/api/pitch", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (response.ok) {
+        console.log("[Queue] Session released successfully");
+        queueSessionIdRef.current = null;
+      } else {
+        console.error(
+          "[Queue] Failed to release session:",
+          await response.text()
+        );
+      }
+    } catch (err) {
+      console.error("[Queue] Error releasing session:", err);
+    }
   };
 
   const addMessage = (role: "user" | "agent" | "system", text: string) => {
@@ -264,6 +306,9 @@ export default function PitchSimulationClient({
 
     setShowVideo(false);
     setIsConnected(false);
+
+    // Release the queue session slot immediately
+    await releaseQueueSession();
 
     // Change message to saving
     setEndingMessage("Saving your pitch...");
