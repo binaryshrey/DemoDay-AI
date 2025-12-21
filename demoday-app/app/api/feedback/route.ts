@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  const anamApiKey = process.env.ANAM_API_KEY;
-  const avatarInvestorId = process.env.ANAM_INVESTOR_AVATAR_ID;
-  const elevenLabsAgentId = process.env.ELEVENLABS_AGENT_ID;
+  const anamCoachApiKey = process.env.ANAM_COACH_API_KEY;
+  const avatarCoachId = process.env.ANAM_COACH_AVATAR_ID;
+  const elevenLabsCoachAgentId = process.env.ELEVENLABS_COACH_AGENT_ID;
   const anamAuthURI = process.env.ANAM_AUTH_URI;
 
-  if (!anamApiKey || !avatarInvestorId || !elevenLabsAgentId || !anamAuthURI) {
+  if (
+    !anamCoachApiKey ||
+    !avatarCoachId ||
+    !elevenLabsCoachAgentId ||
+    !anamAuthURI
+  ) {
     return NextResponse.json(
       {
         error:
-          "Missing environment variables. Check ANAM_API_KEY, ANAM_INVESTOR_AVATAR_ID, ELEVENLABS_AGENT_ID, and ANAM_AUTH_URI",
+          "Missing environment variables. Check ANAM_COACH_API_KEY, ANAM_COACH_AVATAR_ID, ELEVENLABS_COACH_AGENT_ID, and ANAM_AUTH_URI",
       },
       { status: 500 }
     );
@@ -21,11 +26,11 @@ export async function GET(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${anamApiKey}`,
+        Authorization: `Bearer ${anamCoachApiKey}`,
       },
       body: JSON.stringify({
         personaConfig: {
-          avatarId: avatarInvestorId,
+          avatarId: avatarCoachId,
           enableAudioPassthrough: true,
         },
       }),
@@ -33,9 +38,9 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Anam API error:", error);
+      console.error("Anam API error (coach avatar):", error);
       return NextResponse.json(
-        { error: "Failed to get Anam session token" },
+        { error: "Failed to get Anam session token for coach" },
         { status: 500 }
       );
     }
@@ -43,12 +48,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json({
       anamSessionToken: data.sessionToken,
-      elevenLabsAgentId: elevenLabsAgentId,
+      elevenLabsAgentId: elevenLabsCoachAgentId,
     });
   } catch (error) {
-    console.error("Config error:", error);
+    console.error("Config error (coach):", error);
     return NextResponse.json(
-      { error: "Failed to get config" },
+      { error: "Failed to get feedback session config" },
       { status: 500 }
     );
   }

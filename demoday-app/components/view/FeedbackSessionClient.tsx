@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * ElevenLabs + Anam Integration Component
+ * ElevenLabs + Anam Integration Component for Feedback Session
  *
- * Client component that orchestrates the pitch simulation with AI investor
+ * Client component that orchestrates the feedback session with AI coach
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -23,15 +23,13 @@ interface Message {
   text: string;
 }
 
-interface PitchSimulationClientProps {
+interface FeedbackSessionClientProps {
   autoStart?: boolean;
-  duration?: number; // Duration in minutes
 }
 
-export default function PitchSimulationClient({
+export default function FeedbackSessionClient({
   autoStart = false,
-  duration = 2,
-}: PitchSimulationClientProps) {
+}: FeedbackSessionClientProps) {
   const router = useRouter();
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -39,7 +37,6 @@ export default function PitchSimulationClient({
   const [isLoading, setIsLoading] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
-  const [timeRemaining, setTimeRemaining] = useState(duration * 60); // Convert to seconds
   const [isEnding, setIsEnding] = useState(false);
   const [endingMessage, setEndingMessage] = useState("");
   const isIntentionalDisconnectRef = useRef(false);
@@ -51,11 +48,12 @@ export default function PitchSimulationClient({
   const configRef = useRef<Config | null>(null);
   const agentAudioInputStreamRef = useRef<any>(null);
   const anamSessionIdRef = useRef<string | null>(null);
+  const hasInitialized = useRef(false);
 
-  // Initialize Anam session on mount (pre-warm the avatar)
+  // Initialize session on mount - now safe with separate API key
   useEffect(() => {
     const initializeSession = async () => {
-      console.log("[Session] Initializing fresh session...");
+      console.log("[Feedback Session] Initializing session...");
 
       try {
         // Clean up any existing sessions
@@ -64,21 +62,23 @@ export default function PitchSimulationClient({
             await anamClientRef.current.stopStreaming();
             anamClientRef.current = null;
           } catch (err) {
-            console.error("[Session] Error cleaning up:", err);
+            console.error("[Feedback Session] Error cleaning up:", err);
           }
         }
 
-        // Fetch fresh config and initialize Anam avatar
-        const res = await fetch("/api/pitch");
+        // Fetch fresh config and initialize Anam avatar with coach
+        const res = await fetch("/api/feedback");
         const config: Config = await res.json();
 
         if (!res.ok) {
           throw new Error(config.error || "Failed to get config");
         }
 
-        console.log("[Anam] Pre-initializing avatar with fresh session token");
+        console.log(
+          "[Anam] Initializing coach avatar with fresh session token"
+        );
 
-        // Initialize Anam avatar immediately
+        // Initialize Anam avatar
         const anamClient = createClient(config.anamSessionToken, {
           disableInputAudio: true,
         });
@@ -87,7 +87,7 @@ export default function PitchSimulationClient({
           await anamClient.streamToVideoElement(videoRef.current.id);
           const sessionId = anamClient.getActiveSessionId();
           anamSessionIdRef.current = sessionId;
-          console.log("[Anam] Avatar ready, session:", sessionId);
+          console.log("[Anam] Coach avatar ready, session:", sessionId);
         }
 
         // Create audio input stream and keep it ready
@@ -102,12 +102,13 @@ export default function PitchSimulationClient({
         configRef.current = config;
         setShowVideo(true);
 
-        console.log("[Session] Avatar initialized and ready");
+        console.log("[Feedback Session] Coach avatar initialized and ready");
+        hasInitialized.current = true;
 
-        // Keep loader visible for a moment to let avatar settle
+        // Small delay to let avatar settle
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (err) {
-        console.error("[Session] Initialization error:", err);
+        console.error("[Feedback Session] Initialization error:", err);
         showError(err instanceof Error ? err.message : "Failed to initialize");
       } finally {
         setIsInitializing(false);
@@ -117,22 +118,24 @@ export default function PitchSimulationClient({
     initializeSession();
   }, []);
 
+  // Auto-start if enabled
   useEffect(() => {
-    // Auto-start if enabled and hasn't started yet
     if (
       autoStart &&
       !hasAutoStarted.current &&
       !isConnected &&
       !isLoading &&
-      !isInitializing
+      !isInitializing &&
+      hasInitialized.current
     ) {
       hasAutoStarted.current = true;
-      // Add a small delay so user sees the avatar before agent speaks
+      console.log("[Feedback Session] Auto-starting session...");
+      // Small delay so user sees the avatar before agent speaks
       setTimeout(() => {
         handleStart();
       }, 500);
     }
-  }, [autoStart, isInitializing]);
+  }, [autoStart, isInitializing, hasInitialized.current]);
 
   useEffect(() => {
     // Auto-scroll transcript to bottom
@@ -140,26 +143,6 @@ export default function PitchSimulationClient({
       transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
     }
   }, [messages]);
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (!isConnected || timeRemaining <= 0) return;
-
-    const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          // Time's up - end the session with feedback
-          clearInterval(interval);
-          handleStopWithFeedback();
-          addMessage("system", "Time's up. Session has ended!");
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isConnected, timeRemaining]);
 
   // Cleanup on unmount - silent cleanup without feedback
   useEffect(() => {
@@ -171,16 +154,6 @@ export default function PitchSimulationClient({
       }
     };
   }, []);
-
-  // Format time remaining as HH:MM:SS
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const addMessage = (role: "user" | "agent" | "system", text: string) => {
     setMessages((prev) => [...prev, { role, text }]);
@@ -202,16 +175,21 @@ export default function PitchSimulationClient({
         !anamClientRef.current ||
         !agentAudioInputStreamRef.current
       ) {
-        throw new Error("Session not initialized. Please refresh the page.");
+        throw new Error("Session not initialized. Please try again.");
       }
 
-      console.log("[ElevenLabs] Connecting with pre-initialized avatar...");
+      console.log(
+        "[ElevenLabs] Connecting with pre-initialized coach avatar..."
+      );
 
       // Connect to ElevenLabs using the pre-initialized audio stream
       await connectElevenLabs(configRef.current.elevenLabsAgentId, {
         onReady: () => {
           setIsConnected(true);
-          addMessage("system", "Connected. Start pitching your startup...");
+          addMessage(
+            "system",
+            "Connected. Your AI coach is ready to provide feedback..."
+          );
         },
         onAudio: (audio: string) => {
           agentAudioInputStreamRef.current?.sendAudioChunk(audio);
@@ -241,7 +219,7 @@ export default function PitchSimulationClient({
     }
   };
 
-  const handleStopWithFeedback = async () => {
+  const handleStop = async () => {
     // Mark this as an intentional disconnect
     isIntentionalDisconnectRef.current = true;
 
@@ -252,54 +230,36 @@ export default function PitchSimulationClient({
     // Stop connections properly
     stopElevenLabs();
 
-    // Stop Anam streaming and ensure cleanup
     if (anamClientRef.current) {
       try {
         await anamClientRef.current.stopStreaming();
-        console.log("[Session] Anam streaming stopped successfully");
+        console.log("[Feedback Session] Anam streaming stopped successfully");
       } catch (err) {
-        console.error("[Session] Error stopping Anam streaming:", err);
+        console.error("[Feedback Session] Error stopping Anam streaming:", err);
       }
     }
 
     setShowVideo(false);
     setIsConnected(false);
 
-    // Change message to saving
-    setEndingMessage("Saving your pitch...");
+    // Change message
+    setEndingMessage("Returning to dashboard...");
 
     // Wait a moment for connections to fully close
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Clean up client reference
     anamClientRef.current = null;
 
-    // Change message to preparing feedback
-    setEndingMessage("Preparing your feedback session...");
-
-    // Small delay before navigation
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    console.log("[Session] Navigating to feedback page");
-    router.push("/feedback");
+    console.log("[Feedback Session] Navigating to dashboard");
+    router.push("/dashboard");
   };
 
   const handleToggle = () => {
     if (isConnected) {
-      handleStopWithFeedback();
+      handleStop();
     } else {
       handleStart();
-    }
-  };
-
-  const getMessageColor = (role: string) => {
-    switch (role) {
-      case "user":
-        return "text-blue-600";
-      case "agent":
-        return "text-green-600";
-      default:
-        return "text-gray-500";
     }
   };
 
@@ -308,7 +268,7 @@ export default function PitchSimulationClient({
       case "user":
         return "You";
       case "agent":
-        return "Investor";
+        return "Coach";
       default:
         return "•";
     }
@@ -319,38 +279,6 @@ export default function PitchSimulationClient({
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: "#000" }}
     >
-      {/* Countdown Timer - Top Right (below menu) */}
-      {isConnected && !isInitializing && (
-        <div className="absolute top-20 right-6 z-40">
-          <div
-            className="bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl px-6 py-3 shadow-2xl"
-            style={{
-              boxShadow:
-                "0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <svg
-                className="w-5 h-5 text-white/80"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <div className="text-sm text-white">
-                {formatTime(timeRemaining)}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Ending Loader - Blocks UI */}
       {isEnding && (
         <div className="absolute inset-0 bg-black z-50 flex flex-col items-center justify-center">
@@ -371,11 +299,9 @@ export default function PitchSimulationClient({
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
           </div>
           <p className="text-white text-lg mt-6 font-medium">
-            Initializing Session...
+            Initializing Feedback Session...
           </p>
-          <p className="text-white/60 text-sm mt-2">
-            Preparing your pitch simulation
-          </p>
+          <p className="text-white/60 text-sm mt-2">Preparing your AI coach</p>
         </div>
       )}
 
@@ -389,7 +315,9 @@ export default function PitchSimulationClient({
           <p className="text-white text-lg mt-4 font-medium">
             Starting Session...
           </p>
-          <p className="text-white/60 text-sm mt-2">Get ready to pitch!</p>
+          <p className="text-white/60 text-sm mt-2">
+            Connecting to your coach...
+          </p>
         </div>
       )}
 
@@ -397,7 +325,7 @@ export default function PitchSimulationClient({
       <div className="relative w-full max-w-5xl aspect-video">
         <video
           ref={videoRef}
-          id="anam-video"
+          id="anam-video-feedback"
           className="w-full h-full object-contain rounded-lg"
           autoPlay
           playsInline
@@ -411,10 +339,10 @@ export default function PitchSimulationClient({
           style={{ backgroundColor: "#000" }}
         >
           <div className="relative w-32 h-32 mb-6">
-            <div className="absolute inset-0 rounded-full border-2 border-gray-700 transition-colors duration-300" />
-            <div className="absolute inset-2 rounded-full bg-gray-800 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-2 border-purple-700 transition-colors duration-300" />
+            <div className="absolute inset-2 rounded-full bg-purple-900/30 flex items-center justify-center">
               <svg
-                className="w-12 h-12 text-gray-500"
+                className="w-12 h-12 text-purple-400"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -423,18 +351,39 @@ export default function PitchSimulationClient({
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                  d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 22.5l-.394-1.933a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15l.394 1.933a2.25 2.25 0 001.423 1.423L19.5 18.75l-1.183.394a2.25 2.25 0 00-1.423 1.423z"
                 />
               </svg>
             </div>
           </div>
-          <p className="text-white text-lg">
-            {isLoading
-              ? "Connecting..."
-              : isConnected
-              ? "Listening"
-              : "Ready to start"}
-          </p>
+          {isLoading ? (
+            <>
+              <p className="text-white text-xl font-medium mb-2">
+                Initializing...
+              </p>
+              <p className="text-white/60 text-sm">
+                Setting up your feedback session
+              </p>
+            </>
+          ) : isConnected ? (
+            <>
+              <p className="text-white text-xl font-medium mb-2">Listening</p>
+              <p className="text-white/60 text-sm">Your coach is ready</p>
+            </>
+          ) : (
+            <>
+              <p className="text-white text-xl font-medium mb-3">
+                Pitch Complete! 🎉
+              </p>
+              <p className="text-white/70 text-sm mb-2">
+                Great job on your pitch!
+              </p>
+              <p className="text-white/50 text-xs max-w-md text-center">
+                When you're ready, start a feedback session with your AI coach
+                to review your performance and get personalized tips.
+              </p>
+            </>
+          )}
         </div>
       )}
 
@@ -462,7 +411,7 @@ export default function PitchSimulationClient({
                     msg.role === "user"
                       ? "text-blue-400"
                       : msg.role === "agent"
-                      ? "text-green-400"
+                      ? "text-purple-400"
                       : "text-white/60"
                   }`}
                 >
@@ -475,23 +424,31 @@ export default function PitchSimulationClient({
         </div>
       </div>
 
-      {/* End Call Button - Bottom Center */}
+      {/* Go to Dashboard Button - Bottom Center */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
         <button
           onClick={handleToggle}
           disabled={isLoading}
-          className="px-10 py-3 rounded-full font-semibold text-white shadow-2xl transition-all transform  flex items-center gap-3 cursor-pointer disabled:bg-gray-600 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="px-10 py-3 rounded-full font-semibold text-white shadow-2xl transition-all transform flex items-center gap-3 cursor-pointer disabled:bg-gray-600 disabled:cursor-not-allowed disabled:hover:scale-100"
           style={{
-            backgroundColor: isLoading ? "#4b5563" : "#fc7249",
+            backgroundColor: isLoading
+              ? "#4b5563"
+              : isConnected
+              ? "#fc7249"
+              : "#8b5cf6",
           }}
           onMouseEnter={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = "#ff4000";
+              e.currentTarget.style.backgroundColor = isConnected
+                ? "#ff4000"
+                : "#7c3aed";
             }
           }}
           onMouseLeave={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = "#fc7249";
+              e.currentTarget.style.backgroundColor = isConnected
+                ? "#fc7249"
+                : "#8b5cf6";
             }
           }}
         >
@@ -520,14 +477,11 @@ export default function PitchSimulationClient({
             </>
           ) : isConnected ? (
             <>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 6h12v12H6z" />
-              </svg>
-              <span>End Your Pitch</span>
+              <span>Go to Dashboard</span>
             </>
           ) : (
             <>
-              <span>Begin Your Pitch</span>
+              <span>Start Feedback Session</span>
             </>
           )}
         </button>
@@ -539,7 +493,7 @@ export default function PitchSimulationClient({
           {[0, 1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="w-1.5 bg-green-400 rounded-full animate-pulse shadow-lg"
+              className="w-1.5 bg-purple-400 rounded-full animate-pulse shadow-lg"
               style={{
                 height: `${40 + i * 12}%`,
                 animationDelay: `${i * 100}ms`,
