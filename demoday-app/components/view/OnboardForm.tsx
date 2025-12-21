@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, X, Camera, Mic } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -23,15 +23,321 @@ import { Button } from "../ui/button";
 export default function OnboardForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<"form" | "permissions">("form");
+  const [duration, setDuration] = useState("1"); // Duration in minutes
+
+  // Permission states
+  const [micPermission, setMicPermission] = useState<
+    "pending" | "granted" | "denied"
+  >("pending");
+  const [cameraPermission, setCameraPermission] = useState<
+    "pending" | "granted" | "denied"
+  >("pending");
+  const [micStream, setMicStream] = useState<MediaStream | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [audioLevel, setAudioLevel] = useState(0);
+
+  const videoPreviewRef = useRef<HTMLVideoElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      cleanupStreams();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Connect camera stream to video element when it becomes available
+    if (cameraStream && videoPreviewRef.current) {
+      videoPreviewRef.current.srcObject = cameraStream;
+      videoPreviewRef.current.play().catch((err) => {
+        console.error("Error playing video:", err);
+      });
+    }
+  }, [cameraStream]);
+
+  const cleanupStreams = () => {
+    if (micStream) {
+      micStream.getTracks().forEach((track) => track.stop());
+    }
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  };
+
+  const requestMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStream(stream);
+      setMicPermission("granted");
+
+      // Setup audio level monitoring
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+      analyser.fftSize = 256;
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const updateAudioLevel = () => {
+        if (analyserRef.current) {
+          analyserRef.current.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setAudioLevel(average);
+          animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+        }
+      };
+
+      updateAudioLevel();
+    } catch (err) {
+      console.error("Microphone permission denied:", err);
+      setMicPermission("denied");
+    }
+  };
+
+  const requestCameraPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setCameraPermission("granted");
+
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = stream;
+        // Explicitly play the video to ensure it starts
+        try {
+          await videoPreviewRef.current.play();
+        } catch (playError) {
+          console.error("Error playing video:", playError);
+        }
+      }
+    } catch (err) {
+      console.error("Camera permission denied:", err);
+      setCameraPermission("denied");
+    }
+  };
+
+  const handleContinueToPermissions = () => {
+    setStep("permissions");
+    // Auto-request permissions when step changes
+    setTimeout(() => {
+      requestMicrophonePermission();
+      requestCameraPermission();
+    }, 500);
+  };
 
   const handleStartPitch = () => {
     setIsLoading(true);
 
-    // Simulate processing for 10 seconds then redirect
+    // Keep streams alive and redirect with duration parameter
+    // The pitch simulation page will handle the actual connection
     setTimeout(() => {
-      router.push("/pitch-simulation");
-    }, 10000);
+      router.push(`/pitch-simulation?autoStart=true&duration=${duration}`);
+    }, 2000);
   };
+
+  const allPermissionsGranted =
+    micPermission === "granted" && cameraPermission === "granted";
+
+  if (step === "permissions") {
+    return (
+      <div className="mt-8 space-y-6">
+        {/* Permission Setup Card */}
+        <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Setup Your Devices
+            </h2>
+            <p className="text-sm text-gray-600 mt-2">
+              We need access to your microphone and camera for the pitch
+              simulation
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Microphone Check */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      micPermission === "granted"
+                        ? "bg-green-100"
+                        : micPermission === "denied"
+                        ? "bg-red-100"
+                        : "bg-gray-100"
+                    }`}
+                  >
+                    <Mic
+                      className={`w-6 h-6 ${
+                        micPermission === "granted"
+                          ? "text-green-600"
+                          : micPermission === "denied"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Microphone</h3>
+                    <p className="text-sm text-gray-600">
+                      {micPermission === "granted" && "Working perfectly!"}
+                      {micPermission === "denied" && "Permission denied"}
+                      {micPermission === "pending" && "Requesting access..."}
+                    </p>
+                  </div>
+                </div>
+                {micPermission === "granted" && (
+                  <Check className="w-6 h-6 text-green-600" />
+                )}
+                {micPermission === "denied" && (
+                  <X className="w-6 h-6 text-red-600" />
+                )}
+              </div>
+
+              {micPermission === "granted" && (
+                <div className="mt-4">
+                  <p className="text-xs text-gray-500 mb-2">Audio Level</p>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 transition-all duration-100"
+                      style={{
+                        width: `${Math.min((audioLevel / 128) * 100, 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Speak to test your microphone
+                  </p>
+                </div>
+              )}
+
+              {micPermission === "denied" && (
+                <Button
+                  onClick={requestMicrophonePermission}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
+
+            {/* Camera Check */}
+            <div className="border border-gray-200 rounded-lg p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      cameraPermission === "granted"
+                        ? "bg-green-100"
+                        : cameraPermission === "denied"
+                        ? "bg-red-100"
+                        : "bg-gray-100"
+                    }`}
+                  >
+                    <Camera
+                      className={`w-6 h-6 ${
+                        cameraPermission === "granted"
+                          ? "text-green-600"
+                          : cameraPermission === "denied"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Camera</h3>
+                    <p className="text-sm text-gray-600">
+                      {cameraPermission === "granted" && "Working perfectly!"}
+                      {cameraPermission === "denied" && "Permission denied"}
+                      {cameraPermission === "pending" && "Requesting access..."}
+                    </p>
+                  </div>
+                </div>
+                {cameraPermission === "granted" && (
+                  <Check className="w-6 h-6 text-green-600" />
+                )}
+                {cameraPermission === "denied" && (
+                  <X className="w-6 h-6 text-red-600" />
+                )}
+              </div>
+
+              {cameraPermission === "granted" && (
+                <div className="mt-4">
+                  <video
+                    ref={videoPreviewRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full aspect-video bg-gray-900 rounded-lg"
+                    style={{ transform: "scaleX(-1)" }}
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Camera preview</p>
+                </div>
+              )}
+
+              {cameraPermission === "denied" && (
+                <Button
+                  onClick={requestCameraPermission}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="mt-8 flex gap-4">
+            <Button
+              onClick={() => {
+                cleanupStreams();
+                setStep("form");
+                setMicPermission("pending");
+                setCameraPermission("pending");
+              }}
+              variant="outline"
+              size="lg"
+              className="flex-1"
+            >
+              Back to Form
+            </Button>
+            <Button
+              onClick={handleStartPitch}
+              disabled={!allPermissionsGranted || isLoading}
+              size="lg"
+              className="flex-1 bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold"
+            >
+              {isLoading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
+              {isLoading ? "Launching..." : "Start Pitch Simulation"}
+            </Button>
+          </div>
+
+          {!allPermissionsGranted && (
+            <p className="text-center text-sm text-gray-500 mt-4">
+              Please grant both microphone and camera permissions to continue
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="mt-8 space-y-3">
       {/* First Input Group - Configuration with Selects */}
@@ -48,7 +354,7 @@ export default function OnboardForm() {
               <label className="text-sm font-medium text-gray-700">
                 Duration
               </label>
-              <Select defaultValue="1">
+              <Select value={duration} onValueChange={setDuration}>
                 <SelectTrigger className="w-45">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
@@ -164,7 +470,7 @@ export default function OnboardForm() {
               id="content"
               placeholder="Describe your startup, product, team, and vision..."
               rows={10}
-              className="w-full resize-none min-h-[100px]"
+              className="w-full resize-none min-h-25"
             />
           </div>
 
@@ -209,15 +515,13 @@ export default function OnboardForm() {
         </div>
       </div>
 
-      {/* Submit Button */}
       <Button
-        onClick={handleStartPitch}
+        onClick={handleContinueToPermissions}
         disabled={isLoading}
         size="lg"
         className="w-full px-8 py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold"
       >
-        {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
-        {isLoading ? "Preparing Your Pitch Simulation..." : "Start Your Pitch"}
+        Continue to Device Setup
       </Button>
     </div>
   );

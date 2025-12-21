@@ -15,7 +15,7 @@ export default async function Onboard() {
       <div className="px-6 pt-6 lg:px-8">
         <nav className="flex items-center justify-between">
           <a href="/dashboard" className="-m-1.5 p-1.5">
-            <img className="h-8" src="/demoday.svg" alt="demoday-ai" />
+            <img className="h-8" src="/logo-dark.svg" alt="demoday-ai" />
           </a>
           <div className="lg:flex lg:flex-1 lg:justify-end">
             <ProfileMenu user={user} />

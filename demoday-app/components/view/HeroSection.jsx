@@ -39,7 +39,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
         <nav className="flex items-center justify-between" aria-label="Global">
           <div className="flex lg:flex-1 items-center">
             <a href="/" className="-m-1.5 p-1.5">
-              <img className="h-6" src="/demoday.svg" alt="demoday-ai" />
+              <img className="h-6" src="/logo-dark.svg" alt="demoday-ai" />
             </a>
             <h4 className="ml-2 text-gray-900 sm:text-xl font-medium">
               DemoDay AI
