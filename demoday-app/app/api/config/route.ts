@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   const anamApiKey = process.env.ANAM_API_KEY;
-  const avatarId = process.env.ANAM_AVATAR_ID;
+  const avatarInvestorId = process.env.ANAM_INVESTOR_AVATAR_ID;
   const elevenLabsAgentId = process.env.ELEVENLABS_AGENT_ID;
   const anamAuthURI = process.env.ANAM_AUTH_URI;
 
-  if (!anamApiKey || !avatarId || !elevenLabsAgentId || !anamAuthURI) {
+  if (!anamApiKey || !avatarInvestorId || !elevenLabsAgentId || !anamAuthURI) {
     return NextResponse.json(
       {
         error:
-          "Missing environment variables. Check ANAM_API_KEY, ANAM_AVATAR_ID, ELEVENLABS_AGENT_ID, and ANAM_AUTH_URI",
+          "Missing environment variables. Check ANAM_API_KEY, ANAM_INVESTOR_AVATAR_ID, ELEVENLABS_AGENT_ID, and ANAM_AUTH_URI",
       },
       { status: 500 }
     );
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       },
       body: JSON.stringify({
         personaConfig: {
-          avatarId: avatarId,
+          avatarId: avatarInvestorId,
           enableAudioPassthrough: true,
         },
       }),

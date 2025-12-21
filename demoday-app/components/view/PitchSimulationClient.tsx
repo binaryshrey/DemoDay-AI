@@ -42,6 +42,7 @@ export default function PitchSimulationClient({
   const [timeRemaining, setTimeRemaining] = useState(duration * 60); // Convert to seconds
   const [isEnding, setIsEnding] = useState(false);
   const [endingMessage, setEndingMessage] = useState("");
+  const isIntentionalDisconnectRef = useRef(false);
 
   const anamClientRef = useRef<AnamClient | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -163,6 +164,7 @@ export default function PitchSimulationClient({
   // Cleanup on unmount - silent cleanup without feedback
   useEffect(() => {
     return () => {
+      isIntentionalDisconnectRef.current = true; // Mark as intentional on unmount
       stopElevenLabs();
       if (anamClientRef.current) {
         anamClientRef.current.stopStreaming();
@@ -191,6 +193,7 @@ export default function PitchSimulationClient({
 
   const handleStart = async () => {
     setIsLoading(true);
+    isIntentionalDisconnectRef.current = false; // Reset the flag
 
     try {
       // Use pre-initialized config and streams
@@ -223,7 +226,12 @@ export default function PitchSimulationClient({
           anamClientRef.current?.interruptPersona();
           agentAudioInputStreamRef.current?.endSequence();
         },
-        onDisconnect: () => setIsConnected(false),
+        onDisconnect: () => {
+          // Only set isConnected to false if this was an intentional disconnect
+          if (isIntentionalDisconnectRef.current) {
+            setIsConnected(false);
+          }
+        },
         onError: () => showError("Connection error"),
       });
     } catch (err) {
@@ -234,6 +242,9 @@ export default function PitchSimulationClient({
   };
 
   const handleStopWithFeedback = async () => {
+    // Mark this as an intentional disconnect
+    isIntentionalDisconnectRef.current = true;
+
     // Show ending sequence and navigate to feedback
     setIsEnding(true);
     setEndingMessage("Saving your pitch...");
