@@ -20,7 +20,7 @@ export default async function ProfilePage() {
     <DashboardLayout user={user} currentPage="profile">
       <div className="bg-white shadow -m-1 -mx-1 sm:-mx-1 md:-mx-1 -my-3 overflow-x-hidden">
         {/* Header Background */}
-        <div className="relative h-64 bg-[#fc7249]"></div>
+        <div className="relative h-64 bg-[#ffab91]"></div>
 
         {/* Profile Content */}
         <div className="relative px-8 pb-8 max-w-7xl mx-auto min-h-screen">
@@ -71,7 +71,7 @@ export default async function ProfilePage() {
           </div>
 
           {/* Sign Out Button */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
+          <div className="mt-8 pt-6 border-t border-gray-200 ">
             <form
               action={async () => {
                 "use server";
@@ -80,7 +80,7 @@ export default async function ProfilePage() {
             >
               <button
                 type="submit"
-                className="w-full px-4 py-3 bg-[#fc7249] text-white rounded-md hover:bg-[#fc7249]/90 transition-colors font-medium"
+                className="w-full px-4 py-3 bg-[#fc7249] text-white rounded-md hover:bg-[#fc7249]/90 transition-colors font-medium cursor-pointer"
               >
                 Sign Out
               </button>

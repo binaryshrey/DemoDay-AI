@@ -92,7 +92,11 @@ export default async function FilesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 cursor-pointer"
+                >
                   <Filter className="w-4 h-4" />
                   Filter
                 </Button>
@@ -127,7 +131,7 @@ export default async function FilesPage() {
                 {/* File Row 1 */}
 
                 {/* File Row 2 */}
-                <tr className="hover:bg-gray-50">
+                <tr className="hover:bg-gray-50 cursor-pointer">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
@@ -170,7 +174,7 @@ export default async function FilesPage() {
                 {/* File Row 3 */}
 
                 {/* File Row 4 */}
-                <tr className="hover:bg-gray-50">
+                <tr className="hover:bg-gray-50 cursor-pointer">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
@@ -211,7 +215,7 @@ export default async function FilesPage() {
                 </tr>
 
                 {/* File Row 6 */}
-                <tr className="hover:bg-gray-50">
+                <tr className="hover:bg-gray-50 cursor-pointer">
                   <td className="px-6 py-4">
                     <input
                       type="checkbox"
