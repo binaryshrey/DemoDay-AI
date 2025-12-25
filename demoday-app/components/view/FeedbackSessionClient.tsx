@@ -288,7 +288,7 @@ export default function FeedbackSessionClient({
           setIsConnected(true);
           addMessage(
             "system",
-            "Connected. Your AI coach is ready to provide feedback..."
+            "Connected. Your AI coach is ready to provide feedback."
           );
         },
         onAudio: (audio: string) => {
@@ -325,7 +325,7 @@ export default function FeedbackSessionClient({
 
     // Show ending sequence
     setIsEnding(true);
-    setEndingMessage("Ending session...");
+    setEndingMessage("Ending session.");
 
     // Stop connections properly
     stopElevenLabs();
@@ -346,7 +346,7 @@ export default function FeedbackSessionClient({
     await releaseQueueSession();
 
     // Change message
-    setEndingMessage("Returning to dashboard...");
+    setEndingMessage("Returning to dashboard.");
 
     // Wait a moment for connections to fully close
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -421,7 +421,7 @@ export default function FeedbackSessionClient({
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
           </div>
           <p className="text-white text-lg mt-6 font-medium">
-            Initializing Feedback Session...
+            Initializing Feedback Session.
           </p>
           <p className="text-white/60 text-sm mt-2">Preparing your AI coach</p>
         </div>
@@ -435,23 +435,23 @@ export default function FeedbackSessionClient({
             <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
           </div>
           <p className="text-white text-lg mt-4 font-medium">
-            Starting Session...
+            Starting Session.
           </p>
           <p className="text-white/60 text-sm mt-2">
-            Connecting to your coach...
+            Connecting to your coach.
           </p>
         </div>
       )}
 
       {/* Scaled Video Container - Centered with rounded corners */}
       <div
-        className="relative w-full max-w-5xl aspect-video"
+        className="relative w-full max-w-5xl aspect-video bg-black"
         style={{ borderRadius: "48px", overflow: "hidden" }}
       >
         <video
           ref={videoRef}
           id="anam-video-feedback"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
           autoPlay
           playsInline
         />
@@ -484,7 +484,7 @@ export default function FeedbackSessionClient({
           {isLoading ? (
             <>
               <p className="text-white text-xl font-medium mb-2">
-                Initializing...
+                Initializing.
               </p>
               <p className="text-white/60 text-sm">
                 Setting up your feedback session
@@ -526,7 +526,7 @@ export default function FeedbackSessionClient({
         >
           {messages.length === 0 ? (
             <p className="text-white/60 text-xs">
-              Conversation will appear here...
+              Conversation will appear here.
             </p>
           ) : (
             messages.map((msg, idx) => (
@@ -561,6 +561,7 @@ export default function FeedbackSessionClient({
           <video
             ref={userVideoRef}
             className="w-full h-full object-cover rounded-xl"
+            style={{ transform: "scaleX(-1)" }}
             autoPlay
             playsInline
             muted
@@ -620,7 +621,7 @@ export default function FeedbackSessionClient({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <span>Connecting...</span>
+              <span>Connecting.</span>
             </>
           ) : isConnected ? (
             <>

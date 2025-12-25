@@ -310,7 +310,7 @@ export default function PitchSimulationClient({
       await connectElevenLabs(configRef.current.elevenLabsAgentId, {
         onReady: () => {
           setIsConnected(true);
-          addMessage("system", "Connected. Start pitching your startup...");
+          addMessage("system", "Connected. Start pitching your startup.");
         },
         onAudio: (audio: string) => {
           agentAudioInputStreamRef.current?.sendAudioChunk(audio);
@@ -346,7 +346,7 @@ export default function PitchSimulationClient({
 
     // Show ending sequence
     setIsEnding(true);
-    setEndingMessage("Ending session...");
+    setEndingMessage("Ending session.");
 
     // Stop connections properly
     stopElevenLabs();
@@ -368,7 +368,7 @@ export default function PitchSimulationClient({
     await releaseQueueSession();
 
     // Change message to saving
-    setEndingMessage("Saving your pitch...");
+    setEndingMessage("Saving your pitch.");
 
     // Wait a moment for connections to fully close
     await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -377,7 +377,7 @@ export default function PitchSimulationClient({
     anamClientRef.current = null;
 
     // Change message to preparing feedback
-    setEndingMessage("Preparing your feedback session...");
+    setEndingMessage("Preparing your feedback session.");
 
     // Small delay before navigation
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -516,13 +516,13 @@ export default function PitchSimulationClient({
 
       {/* Scaled Video Container - Centered with rounded corners */}
       <div
-        className="relative w-full max-w-5xl aspect-video"
+        className="relative w-full max-w-5xl aspect-video bg-black"
         style={{ borderRadius: "48px", overflow: "hidden" }}
       >
         <video
           ref={videoRef}
           id="anam-video"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
           autoPlay
           playsInline
         />
@@ -576,7 +576,7 @@ export default function PitchSimulationClient({
         >
           {messages.length === 0 ? (
             <p className="text-white/60 text-xs">
-              Conversation will appear here...
+              Conversation will appear here.
             </p>
           ) : (
             messages.map((msg, idx) => (
@@ -611,6 +611,7 @@ export default function PitchSimulationClient({
           <video
             ref={userVideoRef}
             className="w-full h-full object-cover rounded-xl"
+            style={{ transform: "scaleX(-1)" }}
             autoPlay
             playsInline
             muted
@@ -662,7 +663,7 @@ export default function PitchSimulationClient({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <span>Connecting...</span>
+              <span>Connecting.</span>
             </>
           ) : isConnected ? (
             <>
