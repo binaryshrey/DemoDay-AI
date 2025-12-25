@@ -314,7 +314,7 @@ export default function OnboardForm() {
               }}
               variant="outline"
               size="lg"
-              className="flex-1"
+              className="flex-1 cursor-pointer"
             >
               Back to Form
             </Button>
@@ -322,7 +322,7 @@ export default function OnboardForm() {
               onClick={handleStartPitch}
               disabled={!allPermissionsGranted || isLoading}
               size="lg"
-              className="flex-1 bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold"
+              className="flex-1 bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
             >
               {isLoading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
               {isLoading ? "Launching..." : "Start Pitch Simulation"}
@@ -355,7 +355,7 @@ export default function OnboardForm() {
                 Duration
               </label>
               <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger className="w-45">
+                <SelectTrigger className="w-45 cursor-pointer">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
@@ -371,7 +371,7 @@ export default function OnboardForm() {
                 Language
               </label>
               <Select defaultValue="en">
-                <SelectTrigger className="w-45">
+                <SelectTrigger className="w-45 cursor-pointer">
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
@@ -386,7 +386,7 @@ export default function OnboardForm() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Tone</label>
               <Select defaultValue="professional">
-                <SelectTrigger className="w-45">
+                <SelectTrigger className="w-45 cursor-pointer">
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent>
@@ -519,7 +519,7 @@ export default function OnboardForm() {
         onClick={handleContinueToPermissions}
         disabled={isLoading}
         size="lg"
-        className="w-full px-8 py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold"
+        className="w-full px-8 py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
       >
         Continue to Device Setup
       </Button>

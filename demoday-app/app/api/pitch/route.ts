@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Wait for our turn in the queue
     const sessionId = await sessionQueue.requestSession("pitch", async () => {
+      console.log("[Pitch API] Fetching Anam token...");
       const response = await fetch(anamAuthURI, {
         method: "POST",
         headers: {
@@ -54,8 +55,15 @@ export async function GET(request: NextRequest) {
 
       const data = await response.json();
       anamToken = data.sessionToken; // Store the token
+      console.log("[Pitch API] Token acquired successfully");
       return data.sessionToken;
     });
+
+    console.log("[Pitch API] Session ID:", sessionId);
+
+    if (!anamToken) {
+      throw new Error("Failed to acquire Anam token");
+    }
 
     // Return the token and session ID for cleanup
     return NextResponse.json({

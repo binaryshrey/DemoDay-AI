@@ -6,7 +6,7 @@
 interface QueueItem {
   id: string;
   type: "pitch" | "feedback";
-  resolve: (token: string) => void;
+  resolve: () => void;
   reject: (error: Error) => void;
   timestamp: number;
 }
@@ -21,29 +21,41 @@ class SessionQueueManager {
     type: "pitch" | "feedback",
     fetchToken: () => Promise<string>
   ): Promise<string> {
+    const sessionId = this.generateSessionId();
+
     // Check if we can proceed immediately
     if (this.activeSessions.size < this.maxConcurrentSessions) {
-      const sessionId = this.generateSessionId();
       this.activeSessions.add(sessionId);
+      console.log(`[Queue] Immediate session granted: ${sessionId}`);
 
       try {
-        const token = await fetchToken();
-        return token;
+        await fetchToken(); // Execute the fetch but don't need the return value
+        return sessionId; // Return sessionId for cleanup tracking
       } catch (error) {
         this.activeSessions.delete(sessionId);
+        console.error(`[Queue] Failed to fetch token for ${sessionId}:`, error);
         throw error;
       }
     }
 
     // Queue the request
+    console.log(
+      `[Queue] Adding ${type} session to queue. Current position: ${
+        this.queue.length + 1
+      }`
+    );
+
     return new Promise((resolve, reject) => {
       const queueItem: QueueItem = {
-        id: this.generateSessionId(),
+        id: sessionId,
         type,
-        resolve: async (token: string) => {
+        resolve: async () => {
+          this.activeSessions.add(sessionId);
           try {
-            resolve(token);
+            await fetchToken();
+            resolve(sessionId);
           } catch (error) {
+            this.activeSessions.delete(sessionId);
             reject(error as Error);
           }
         },
@@ -52,9 +64,6 @@ class SessionQueueManager {
       };
 
       this.queue.push(queueItem);
-      console.log(
-        `[Queue] Added ${type} session to queue. Position: ${this.queue.length}`
-      );
 
       // Start processing if not already
       if (!this.processing) {
@@ -77,11 +86,10 @@ class SessionQueueManager {
       const item = this.queue.shift();
       if (!item) break;
 
-      this.activeSessions.add(item.id);
       console.log(`[Queue] Processing ${item.type} session ${item.id}`);
 
-      // Notify the waiting request
-      item.resolve(item.id);
+      // Call the resolve function which will fetch the token and add to active sessions
+      item.resolve();
     }
 
     this.processing = false;

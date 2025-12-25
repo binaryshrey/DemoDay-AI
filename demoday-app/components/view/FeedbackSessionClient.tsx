@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@anam-ai/js-sdk";
 import type AnamClient from "@anam-ai/js-sdk/dist/module/AnamClient";
 import { connectElevenLabs, stopElevenLabs } from "../../lib/elevenlabs";
+import ProfileMenu from "./ProfileMenu";
 
 interface Config {
   anamSessionToken: string;
@@ -26,10 +27,12 @@ interface Message {
 
 interface FeedbackSessionClientProps {
   autoStart?: boolean;
+  user: any; // User object from WorkOS
 }
 
 export default function FeedbackSessionClient({
   autoStart = false,
+  user,
 }: FeedbackSessionClientProps) {
   const router = useRouter();
   const [isConnected, setIsConnected] = useState(false);
@@ -55,12 +58,20 @@ export default function FeedbackSessionClient({
   // Initialize session on mount - now safe with separate API key
   useEffect(() => {
     const initializeSession = async () => {
+      // Prevent re-initialization if already initialized
+      if (hasInitialized.current) {
+        console.log("[Feedback Session] Already initialized, skipping...");
+        return;
+      }
+
       console.log("[Feedback Session] Initializing session...");
+      hasInitialized.current = true;
 
       try {
         // Clean up any existing sessions
         if (anamClientRef.current) {
           try {
+            console.log("[Feedback Session] Cleaning up existing session...");
             await anamClientRef.current.stopStreaming();
             anamClientRef.current = null;
           } catch (err) {
@@ -69,8 +80,20 @@ export default function FeedbackSessionClient({
         }
 
         // Fetch fresh config and initialize Anam avatar with coach
+        console.log("[Feedback Session] Fetching config from /api/feedback...");
         const res = await fetch("/api/feedback");
+        console.log(
+          "[Feedback Session] Received response:",
+          res.status,
+          res.ok
+        );
         const config: Config = await res.json();
+        console.log("[Feedback Session] Config parsed:", {
+          hasToken: !!config.anamSessionToken,
+          hasAgentId: !!config.elevenLabsAgentId,
+          hasQueueId: !!config.queueSessionId,
+          error: config.error,
+        });
 
         if (!res.ok) {
           throw new Error(config.error || "Failed to get config");
@@ -111,13 +134,14 @@ export default function FeedbackSessionClient({
         setShowVideo(true);
 
         console.log("[Feedback Session] Coach avatar initialized and ready");
-        hasInitialized.current = true;
 
         // Small delay to let avatar settle
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (err) {
         console.error("[Feedback Session] Initialization error:", err);
         showError(err instanceof Error ? err.message : "Failed to initialize");
+        // Reset initialization flag on error so user can retry
+        hasInitialized.current = false;
       } finally {
         setIsInitializing(false);
       }
@@ -143,7 +167,7 @@ export default function FeedbackSessionClient({
         handleStart();
       }, 500);
     }
-  }, [autoStart, isInitializing, hasInitialized.current]);
+  }, [autoStart, isInitializing, isConnected]);
 
   useEffect(() => {
     // Auto-scroll transcript to bottom
@@ -162,6 +186,8 @@ export default function FeedbackSessionClient({
       }
       // Release the queue session slot
       releaseQueueSession();
+      // Reset initialization flag on unmount to allow re-initialization on remount
+      hasInitialized.current = false;
     };
   }, []);
 
@@ -324,6 +350,22 @@ export default function FeedbackSessionClient({
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: "#000" }}
     >
+      {/* Navigation Header */}
+      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
+        <nav className="flex items-center justify-between">
+          <a href="/dashboard" className="-m-1.5 p-1.5">
+            <img
+              className="h-8 drop-shadow-lg"
+              src="/logo-light.svg"
+              alt="demoday-ai"
+            />
+          </a>
+          <div className="lg:flex lg:flex-1 lg:justify-end">
+            <ProfileMenu user={user} />
+          </div>
+        </nav>
+      </div>
+
       {/* Ending Loader - Blocks UI */}
       {isEnding && (
         <div className="absolute inset-0 bg-black z-50 flex flex-col items-center justify-center">

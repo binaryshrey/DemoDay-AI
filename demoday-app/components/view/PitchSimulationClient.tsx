@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@anam-ai/js-sdk";
 import type AnamClient from "@anam-ai/js-sdk/dist/module/AnamClient";
 import { connectElevenLabs, stopElevenLabs } from "../../lib/elevenlabs";
+import ProfileMenu from "./ProfileMenu";
 
 interface Config {
   anamSessionToken: string;
@@ -27,11 +28,13 @@ interface Message {
 interface PitchSimulationClientProps {
   autoStart?: boolean;
   duration?: number; // Duration in minutes
+  user: any; // User object from WorkOS
 }
 
 export default function PitchSimulationClient({
   autoStart = false,
   duration = 2,
+  user,
 }: PitchSimulationClientProps) {
   const router = useRouter();
   const [isConnected, setIsConnected] = useState(false);
@@ -53,16 +56,25 @@ export default function PitchSimulationClient({
   const agentAudioInputStreamRef = useRef<any>(null);
   const anamSessionIdRef = useRef<string | null>(null);
   const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
+  const hasInitialized = useRef(false);
 
   // Initialize Anam session on mount (pre-warm the avatar)
   useEffect(() => {
     const initializeSession = async () => {
+      // Prevent re-initialization if already initialized
+      if (hasInitialized.current) {
+        console.log("[Session] Already initialized, skipping...");
+        return;
+      }
+
       console.log("[Session] Initializing fresh session...");
+      hasInitialized.current = true;
 
       try {
         // Clean up any existing sessions
         if (anamClientRef.current) {
           try {
+            console.log("[Session] Cleaning up existing session...");
             await anamClientRef.current.stopStreaming();
             anamClientRef.current = null;
           } catch (err) {
@@ -71,8 +83,16 @@ export default function PitchSimulationClient({
         }
 
         // Fetch fresh config and initialize Anam avatar
+        console.log("[Session] Fetching config from /api/pitch...");
         const res = await fetch("/api/pitch");
+        console.log("[Session] Received response:", res.status, res.ok);
         const config: Config = await res.json();
+        console.log("[Session] Config parsed:", {
+          hasToken: !!config.anamSessionToken,
+          hasAgentId: !!config.elevenLabsAgentId,
+          hasQueueId: !!config.queueSessionId,
+          error: config.error,
+        });
 
         if (!res.ok) {
           throw new Error(config.error || "Failed to get config");
@@ -117,6 +137,8 @@ export default function PitchSimulationClient({
       } catch (err) {
         console.error("[Session] Initialization error:", err);
         showError(err instanceof Error ? err.message : "Failed to initialize");
+        // Reset initialization flag on error so user can retry
+        hasInitialized.current = false;
       } finally {
         setIsInitializing(false);
       }
@@ -132,7 +154,8 @@ export default function PitchSimulationClient({
       !hasAutoStarted.current &&
       !isConnected &&
       !isLoading &&
-      !isInitializing
+      !isInitializing &&
+      hasInitialized.current
     ) {
       hasAutoStarted.current = true;
       // Add a small delay so user sees the avatar before agent speaks
@@ -140,7 +163,7 @@ export default function PitchSimulationClient({
         handleStart();
       }, 500);
     }
-  }, [autoStart, isInitializing]);
+  }, [autoStart, isInitializing, isConnected]);
 
   useEffect(() => {
     // Auto-scroll transcript to bottom
@@ -179,6 +202,8 @@ export default function PitchSimulationClient({
       }
       // Release the queue session slot
       releaseQueueSession();
+      // Reset initialization flag on unmount to allow re-initialization on remount
+      hasInitialized.current = false;
     };
   }, []);
 
@@ -364,6 +389,22 @@ export default function PitchSimulationClient({
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: "#000" }}
     >
+      {/* Navigation Header */}
+      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
+        <nav className="flex items-center justify-between">
+          <a href="/dashboard" className="-m-1.5 p-1.5">
+            <img
+              className="h-8 drop-shadow-lg"
+              src="/logo-light.svg"
+              alt="demoday-ai"
+            />
+          </a>
+          <div className="lg:flex lg:flex-1 lg:justify-end">
+            <ProfileMenu user={user} />
+          </div>
+        </nav>
+      </div>
+
       {/* Countdown Timer - Top Right (below menu) */}
       {isConnected && !isInitializing && (
         <div className="absolute top-20 right-6 z-40">

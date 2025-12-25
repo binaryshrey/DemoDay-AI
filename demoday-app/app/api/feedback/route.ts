@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const sessionId = await sessionQueue.requestSession(
       "feedback",
       async () => {
+        console.log("[Feedback API] Fetching Anam token...");
         const response = await fetch(anamAuthURI, {
           method: "POST",
           headers: {
@@ -56,9 +57,16 @@ export async function GET(request: NextRequest) {
 
         const data = await response.json();
         anamToken = data.sessionToken; // Store the token
+        console.log("[Feedback API] Token acquired successfully");
         return data.sessionToken;
       }
     );
+
+    console.log("[Feedback API] Session ID:", sessionId);
+
+    if (!anamToken) {
+      throw new Error("Failed to acquire Anam token");
+    }
 
     // Return the token and session ID for cleanup
     return NextResponse.json({
