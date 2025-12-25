@@ -23,7 +23,7 @@ interface User {
 interface DashboardLayoutProps {
   children: React.ReactNode;
   user: User;
-  currentPage: "dashboard" | "files" | "settings" | "support";
+  currentPage: "dashboard" | "files" | "settings" | "support" | "profile";
 }
 
 function classNames(...classes: string[]) {
