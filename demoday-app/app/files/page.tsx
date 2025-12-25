@@ -28,7 +28,7 @@ export default async function FilesPage() {
 
   return (
     <DashboardLayout user={user} currentPage="files">
-      <div className="p-6">
+      <div className="px-4 pb-6">
         {/* Upload Section */}
         <div className="bg-white mb-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">
@@ -96,14 +96,6 @@ export default async function FilesPage() {
                   <Filter className="w-4 h-4" />
                   Filter
                 </Button>
-                <div className="flex border border-gray-300 rounded">
-                  <button className="p-2 hover:bg-gray-100">
-                    <List className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button className="p-2 hover:bg-gray-100 border-l border-gray-300">
-                    <Grid className="w-4 h-4 text-gray-600" />
-                  </button>
-                </div>
               </div>
             </div>
           </div>

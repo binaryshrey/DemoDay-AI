@@ -123,7 +123,7 @@ export default function DashboardLayout({
                     <div className="flex shrink-0 items-center px-4">
                       <Image
                         className="h-8 w-auto"
-                        src="/logo-light.svg"
+                        src="/logo-dark.svg"
                         alt="DemoDay AI"
                         width={32}
                         height={32}
@@ -133,29 +133,55 @@ export default function DashboardLayout({
                       </p> */}
                     </div>
                     <nav className="mt-5 space-y-1 px-2">
-                      {navigation.map((item) => (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          className={classNames(
-                            item.current
-                              ? "bg-[#fc7249] text-white"
-                              : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
-                            "group flex items-center px-2 py-2 text-base font-medium rounded-md"
-                          )}
-                        >
-                          <item.icon
+                      {navigation.map((item) =>
+                        item.name === "Support" ? (
+                          <a
+                            key={item.name}
+                            href="https://github.com/binaryshrey/DemoDay-AI/issues"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className={classNames(
                               item.current
-                                ? "text-white"
-                                : "text-gray-600 group-hover:text-gray-600",
-                              "mr-4 shrink-0 h-6 w-6"
+                                ? "bg-[#fc7249] text-white"
+                                : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
+                              "group flex items-center px-2 py-2 text-base font-medium rounded-md"
                             )}
-                            aria-hidden="true"
-                          />
-                          {item.name}
-                        </Link>
-                      ))}
+                          >
+                            <item.icon
+                              className={classNames(
+                                item.current
+                                  ? "text-white"
+                                  : "text-gray-600 group-hover:text-gray-600",
+                                "mr-4 shrink-0 h-6 w-6"
+                              )}
+                              aria-hidden="true"
+                            />
+                            {item.name}
+                          </a>
+                        ) : (
+                          <Link
+                            key={item.name}
+                            href={item.href}
+                            className={classNames(
+                              item.current
+                                ? "bg-[#fc7249] text-white"
+                                : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
+                              "group flex items-center px-2 py-2 text-base font-medium rounded-md"
+                            )}
+                          >
+                            <item.icon
+                              className={classNames(
+                                item.current
+                                  ? "text-white"
+                                  : "text-gray-600 group-hover:text-gray-600",
+                                "mr-4 shrink-0 h-6 w-6"
+                              )}
+                              aria-hidden="true"
+                            />
+                            {item.name}
+                          </Link>
+                        )
+                      )}
                     </nav>
                   </div>
                   <div className="flex shrink-0 border-t border-gray-200 p-4">
@@ -213,29 +239,55 @@ export default function DashboardLayout({
                 </p> */}
               </div>
               <nav className="mt-5 flex-1 space-y-1 px-2">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={classNames(
-                      item.current
-                        ? "bg-[#fc7249] text-white"
-                        : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
-                      "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
-                    )}
-                  >
-                    <item.icon
+                {navigation.map((item) =>
+                  item.name === "Support" ? (
+                    <a
+                      key={item.name}
+                      href="https://github.com/binaryshrey/DemoDay-AI/issues"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className={classNames(
                         item.current
-                          ? "text-white"
-                          : "text-gray-600 group-hover:text-gray-600",
-                        "mr-4 ml-1 shrink-0 h-5 w-5"
+                          ? "bg-[#fc7249] text-white"
+                          : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
+                        "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                       )}
-                      aria-hidden="true"
-                    />
-                    {item.name}
-                  </Link>
-                ))}
+                    >
+                      <item.icon
+                        className={classNames(
+                          item.current
+                            ? "text-white"
+                            : "text-gray-600 group-hover:text-gray-600",
+                          "mr-4 ml-1 shrink-0 h-5 w-5"
+                        )}
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={classNames(
+                        item.current
+                          ? "bg-[#fc7249] text-white"
+                          : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
+                        "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+                      )}
+                    >
+                      <item.icon
+                        className={classNames(
+                          item.current
+                            ? "text-white"
+                            : "text-gray-600 group-hover:text-gray-600",
+                          "mr-4 ml-1 shrink-0 h-5 w-5"
+                        )}
+                        aria-hidden="true"
+                      />
+                      {item.name}
+                    </Link>
+                  )
+                )}
               </nav>
             </div>
 
@@ -266,14 +318,16 @@ export default function DashboardLayout({
         </div>
         <div className="flex flex-1 flex-col md:pl-59">
           <div className="sticky top-0 z-10 bg-gray-100 pl-1 pt-1 sm:pl-3 sm:pt-3 md:hidden">
-            <button
-              type="button"
-              className="-ml-0.5 -mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <span className="sr-only">Open sidebar</span>
-              <RiMenuLine className="h-6 w-6" aria-hidden="true" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="-ml-0.5 -mt-0.5 inline-flex h-12 w-12 items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <span className="sr-only">Open sidebar</span>
+                <RiMenuLine className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <main className="flex-1">
             <div className="py-2">

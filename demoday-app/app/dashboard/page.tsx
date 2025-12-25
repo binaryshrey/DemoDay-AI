@@ -85,7 +85,7 @@ export default async function DashboardPage() {
       <div>
         {/* Top bar with search and button */}
         <div className="flex items-center justify-between mb-4 mx-4">
-          <div className="relative w-120">
+          <div className="relative w-64 lg:w-120">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-3 h-3" />
             <Input
               type="text"
@@ -93,8 +93,9 @@ export default async function DashboardPage() {
               className="pl-10"
             />
           </div>
-          <Button className="bg-[#fc7249] hover:bg-[#fc7249] cursor-pointer text-white">
-            + New Pitch Session
+          <Button className="bg-[#fc7249] hover:bg-[#fc7249] cursor-pointer text-white px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">+ New Pitch Session</span>
+            <span className="sm:hidden">+ New Pitch</span>
           </Button>
         </div>
 
@@ -102,7 +103,7 @@ export default async function DashboardPage() {
         <hr className="border-gray-300 mb-3" />
 
         {/* Date and Greeting */}
-        <div className="mb-2 mx-4">
+        <div className="mb-4 mx-4">
           <p className="text-sm text-gray-500">{formattedDate}</p>
           <h1 className="text-2xl font-medium text-gray-900">
             {greeting}, {userName}!
@@ -110,7 +111,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-2 mx-4 mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mx-4 mt-2">
           {/* Total Pitch Sessions */}
           <div className="bg-[#ffab91] rounded-xl p-6 shadow-lg">
             <div className="flex items-start justify-between mb-4">
@@ -170,7 +171,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Pitch Sessions Table */}
-        <div className="mt-6 bg-white rounded-lg  mx-4 overflow-hidden">
+        <div className="mt-6 bg-white rounded-lg  overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               Recent Pitch Sessions
@@ -276,6 +277,29 @@ export default async function DashboardPage() {
                 {/* Row 4 */}
                 <tr className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #PITCH004
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    FinTech Startup
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    41 mins
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                    Address regulatory concerns and scalability issues
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      Review Needed
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    6.5/10
+                  </td>
+                </tr>
+
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     #PITCH005
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -297,30 +321,79 @@ export default async function DashboardPage() {
                   </td>
                 </tr>
 
-                {/* Row 5 */}
-
+                {/* Row 6 */}
                 <tr className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #PITCH004
+                    #PITCH006
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    FinTech Startup
+                    E-Commerce Platform
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    41 mins
+                    42 mins
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                    Address regulatory concerns and scalability issues
+                    Strong market fit, focus on customer acquisition
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                      Review Needed
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Completed
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                    6.5/10
+                    8.2/10
                   </td>
                 </tr>
+
+                {/* Row 7 */}
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #PITCH007
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    Travel Tech App
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    36 mins
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                    Innovative concept, needs better revenue model
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      Pending
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    7.5/10
+                  </td>
+                </tr>
+
+                {/* Row 8 */}
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    #PITCH008
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    Blockchain Solution
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    48 mins
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                    Solid technology, clarify use cases and go-to-market
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Completed
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    8.8/10
+                  </td>
+                </tr>
+
+                {/* Row 5 */}
               </tbody>
             </table>
           </div>
