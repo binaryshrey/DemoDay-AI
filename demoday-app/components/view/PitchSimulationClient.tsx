@@ -50,6 +50,7 @@ export default function PitchSimulationClient({
 
   const anamClientRef = useRef<AnamClient | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const userVideoRef = useRef<HTMLVideoElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const hasAutoStarted = useRef(false);
   const configRef = useRef<Config | null>(null);
@@ -57,6 +58,7 @@ export default function PitchSimulationClient({
   const anamSessionIdRef = useRef<string | null>(null);
   const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
   const hasInitialized = useRef(false);
+  const userStreamRef = useRef<MediaStream | null>(null);
 
   // Initialize Anam session on mount (pre-warm the avatar)
   useEffect(() => {
@@ -204,6 +206,36 @@ export default function PitchSimulationClient({
       releaseQueueSession();
       // Reset initialization flag on unmount to allow re-initialization on remount
       hasInitialized.current = false;
+      // Stop user camera stream
+      if (userStreamRef.current) {
+        userStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // Initialize user camera
+  useEffect(() => {
+    const initUserCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240 },
+          audio: false,
+        });
+        userStreamRef.current = stream;
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("[Camera] Failed to access user camera:", err);
+      }
+    };
+
+    initUserCamera();
+
+    return () => {
+      if (userStreamRef.current) {
+        userStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
     };
   }, []);
 
@@ -391,17 +423,20 @@ export default function PitchSimulationClient({
     >
       {/* Navigation Header */}
       <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
-        <nav className="flex items-center justify-between">
-          <a href="/dashboard" className="-m-1.5 p-1.5">
-            <img
-              className="h-8 drop-shadow-lg"
-              src="/logo-light.svg"
-              alt="demoday-ai"
-            />
-          </a>
-          <div className="lg:flex lg:flex-1 lg:justify-end">
+        <nav className="flex flex-col items-center gap-4">
+          <div className="w-full flex items-center justify-between">
+            <a href="/dashboard" className="-m-1.5 p-1.5">
+              <img
+                className="h-8 drop-shadow-lg"
+                src="/logo-light.svg"
+                alt="demoday-ai"
+              />
+            </a>
             <ProfileMenu user={user} />
           </div>
+          <h1 className="text-white text-4xl font-semibold">
+            DemoDay Investor Pitch
+          </h1>
         </nav>
       </div>
 
@@ -457,7 +492,7 @@ export default function PitchSimulationClient({
             <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
           </div>
           <p className="text-white text-lg mt-6 font-medium">
-            Initializing Session...
+            Initializing Session
           </p>
           <p className="text-white/60 text-sm mt-2">
             Preparing your pitch simulation
@@ -479,12 +514,13 @@ export default function PitchSimulationClient({
         </div>
       )}
 
-      {/* Scaled Video Container - Centered */}
+      {/* Scaled Video Container - Centered with rounded corners */}
       <div className="relative w-full max-w-5xl aspect-video">
         <video
           ref={videoRef}
           id="anam-video"
-          className="w-full h-full object-contain rounded-lg"
+          className="w-full h-full object-contain"
+          style={{ borderRadius: "48px" }}
           autoPlay
           playsInline
         />
@@ -558,6 +594,28 @@ export default function PitchSimulationClient({
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      {/* User Camera Preview - Bottom Right */}
+      <div className="absolute bottom-6 right-6 w-80 h-48 overflow-hidden">
+        <div
+          className="relative w-full h-full bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl shadow-2xl"
+          style={{
+            boxShadow:
+              "0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
+          }}
+        >
+          <video
+            ref={userVideoRef}
+            className="w-full h-full object-cover rounded-xl"
+            autoPlay
+            playsInline
+            muted
+          />
+          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
+            <span className="text-white/90 text-xs font-medium">You</span>
+          </div>
         </div>
       </div>
 
