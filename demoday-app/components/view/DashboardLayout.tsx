@@ -139,7 +139,7 @@ export default function DashboardLayout({
                           href={item.href}
                           className={classNames(
                             item.current
-                              ? "bg-[#ffab91] text-white"
+                              ? "bg-[#fc7249] text-white"
                               : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
                             "group flex items-center px-2 py-2 text-base font-medium rounded-md"
                           )}
@@ -219,7 +219,7 @@ export default function DashboardLayout({
                     href={item.href}
                     className={classNames(
                       item.current
-                        ? "bg-[#ffab91] text-white"
+                        ? "bg-[#fc7249] text-white"
                         : "text-gray-600 hover:bg-[#ffeee9] hover:text-gray-600",
                       "group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                     )}
@@ -264,7 +264,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>
-        <div className="flex flex-1 flex-col md:pl-64">
+        <div className="flex flex-1 flex-col md:pl-59">
           <div className="sticky top-0 z-10 bg-gray-100 pl-1 pt-1 sm:pl-3 sm:pt-3 md:hidden">
             <button
               type="button"
@@ -276,10 +276,10 @@ export default function DashboardLayout({
             </button>
           </div>
           <main className="flex-1">
-            <div className="py-6">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-                <div className="py-4 hidden lg:block">{children}</div>
-                <div className="py-2 overflow-y-auto lg:hidden">{children}</div>
+            <div className="py-2">
+              <div className="mx-auto max-w-8xl px-1 sm:px-1 md:px-1">
+                <div className="py-1 hidden lg:block">{children}</div>
+                <div className="py-1 overflow-y-auto lg:hidden">{children}</div>
               </div>
             </div>
           </main>
