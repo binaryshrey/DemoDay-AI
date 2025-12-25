@@ -352,17 +352,20 @@ export default function FeedbackSessionClient({
     >
       {/* Navigation Header */}
       <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
-        <nav className="flex items-center justify-between">
-          <a href="/dashboard" className="-m-1.5 p-1.5">
-            <img
-              className="h-8 drop-shadow-lg"
-              src="/logo-light.svg"
-              alt="demoday-ai"
-            />
-          </a>
-          <div className="lg:flex lg:flex-1 lg:justify-end">
+        <nav className="flex flex-col items-center gap-4">
+          <div className="w-full flex items-center justify-between">
+            <a href="/dashboard" className="-m-1.5 p-1.5">
+              <img
+                className="h-8 drop-shadow-lg"
+                src="/logo-light.svg"
+                alt="demoday-ai"
+              />
+            </a>
             <ProfileMenu user={user} />
           </div>
+          <h1 className="text-white text-2xl font-semibold">
+            DemoDay Investor Feedback
+          </h1>
         </nav>
       </div>
 
@@ -408,12 +411,15 @@ export default function FeedbackSessionClient({
         </div>
       )}
 
-      {/* Scaled Video Container - Centered */}
-      <div className="relative w-full max-w-5xl aspect-video">
+      {/* Scaled Video Container - Centered with rounded corners */}
+      <div
+        className="relative w-full max-w-5xl aspect-video"
+        style={{ borderRadius: "48px", overflow: "hidden" }}
+      >
         <video
           ref={videoRef}
           id="anam-video-feedback"
-          className="w-full h-full object-contain rounded-lg"
+          className="w-full h-full object-contain"
           autoPlay
           playsInline
         />
