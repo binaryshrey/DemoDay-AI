@@ -1,6 +1,18 @@
 // app/files/page.tsx
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import DashboardLayout from "@/components/view/DashboardLayout";
+import {
+  Upload,
+  Search,
+  Filter,
+  List,
+  Grid,
+  FileText,
+  MoreVertical,
+  FolderPlus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default async function FilesPage() {
   const { user } = await withAuth();
@@ -16,101 +28,238 @@ export default async function FilesPage() {
 
   return (
     <DashboardLayout user={user} currentPage="files">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Files</h1>
-        <p className="mt-2 text-gray-600">
-          Manage your pitch decks, presentations, and documents
-        </p>
+      <div className="p-6">
+        {/* Upload Section */}
+        <div className="bg-white mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            Upload Files
+          </h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Add documents, photos or videos to your pitch files.
+          </p>
 
-        <div className="mt-8 space-y-6">
-          {/* Upload Section */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Upload Files
-            </h2>
+          <label htmlFor="file-upload" className="block cursor-pointer">
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-gray-400 transition-colors">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 48 48"
-                aria-hidden="true"
-              >
-                <path
-                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <div className="mt-4">
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Upload a file
-                </label>
-                <input
-                  id="file-upload"
-                  name="file-upload"
-                  type="file"
-                  className="sr-only"
-                />
+              <div className="flex justify-center mb-4">
+                <Upload className="w-12 h-12 text-gray-400" />
+              </div>
+              <div className="text-sm text-gray-600">
+                Drop files here or{" "}
+                <span className="text-[#fc7249] hover:text-[#ff4000] font-medium">
+                  select files to upload
+                </span>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                PDF, PPT, PPTX up to 10MB
+                Up to 5 files or 20 MB
               </p>
             </div>
-          </div>
+            <input id="file-upload" type="file" multiple className="hidden" />
+          </label>
+        </div>
 
-          {/* Files List */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">
-                Recent Files
+        {/* Files List Section */}
+        <div className="bg-white rounded-lg border border-gray-200">
+          {/* Toolbar */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Pitch Files
               </h2>
-            </div>
-            <div className="px-6 py-4">
-              <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  No files
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Get started by uploading a file.
-                </p>
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-gray-600">
+                  Sort by:{" "}
+                  <select className="border-0 text-[#fc7249] font-medium focus:ring-0 cursor-pointer">
+                    <option>Date: Most Recent</option>
+                    <option>Name</option>
+                    <option>Size</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Storage Info */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Storage</h2>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Used</span>
-                <span className="font-medium text-gray-900">0 MB of 1 GB</span>
+          {/* Search and Filter Bar */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    type="text"
+                    placeholder="Search Document"
+                    className="pl-10 w-64"
+                  />
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-indigo-600 h-2 rounded-full"
-                  style={{ width: "0%" }}
-                />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Filter className="w-4 h-4" />
+                  Filter
+                </Button>
+                <div className="flex border border-gray-300 rounded">
+                  <button className="p-2 hover:bg-gray-100">
+                    <List className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button className="p-2 hover:bg-gray-100 border-l border-gray-300">
+                    <Grid className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Files Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="w-12 px-6 py-3">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Upload Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Size
+                  </th>
+                  <th className="px-6 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {/* File Row 1 */}
+
+                {/* File Row 2 */}
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <div
+                          className="w-10 h-10 rounded flex items-center justify-center"
+                          style={{ backgroundColor: "#ffd4c4" }}
+                        >
+                          <FileText
+                            className="w-5 h-5"
+                            style={{ color: "#fc7249" }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          Financial Projections.xlsx
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    24 Jul, 2024
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    1.8 MB
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+
+                {/* File Row 3 */}
+
+                {/* File Row 4 */}
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <div
+                          className="w-10 h-10 rounded flex items-center justify-center"
+                          style={{ backgroundColor: "#ffd4c4" }}
+                        >
+                          <FileText
+                            className="w-5 h-5"
+                            style={{ color: "#fc7249" }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          Product Demo Video.mp4
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    23 Jul, 2024
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    15.6 MB
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+
+                {/* File Row 6 */}
+                <tr className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0">
+                        <div
+                          className="w-10 h-10 rounded flex items-center justify-center"
+                          style={{ backgroundColor: "#ffd4c4" }}
+                        >
+                          <FileText
+                            className="w-5 h-5"
+                            style={{ color: "#fc7249" }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          Business Plan 2024.docx
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    22 Jul, 2024
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    3.2 MB
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button className="text-gray-400 hover:text-gray-600">
+                      <MoreVertical className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
