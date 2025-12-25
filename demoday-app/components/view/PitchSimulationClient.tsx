@@ -50,6 +50,7 @@ export default function PitchSimulationClient({
 
   const anamClientRef = useRef<AnamClient | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const userVideoRef = useRef<HTMLVideoElement>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const hasAutoStarted = useRef(false);
   const configRef = useRef<Config | null>(null);
@@ -57,6 +58,7 @@ export default function PitchSimulationClient({
   const anamSessionIdRef = useRef<string | null>(null);
   const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
   const hasInitialized = useRef(false);
+  const userStreamRef = useRef<MediaStream | null>(null);
 
   // Initialize Anam session on mount (pre-warm the avatar)
   useEffect(() => {
@@ -204,6 +206,36 @@ export default function PitchSimulationClient({
       releaseQueueSession();
       // Reset initialization flag on unmount to allow re-initialization on remount
       hasInitialized.current = false;
+      // Stop user camera stream
+      if (userStreamRef.current) {
+        userStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // Initialize user camera
+  useEffect(() => {
+    const initUserCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240 },
+          audio: false,
+        });
+        userStreamRef.current = stream;
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("[Camera] Failed to access user camera:", err);
+      }
+    };
+
+    initUserCamera();
+
+    return () => {
+      if (userStreamRef.current) {
+        userStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
     };
   }, []);
 
@@ -564,6 +596,28 @@ export default function PitchSimulationClient({
               </div>
             ))
           )}
+        </div>
+      </div>
+
+      {/* User Video Preview - Bottom Right */}
+      <div className="absolute bottom-6 right-6 w-72 h-48 overflow-hidden">
+        <div
+          className="relative w-full h-full bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl shadow-2xl"
+          style={{
+            boxShadow:
+              "0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
+          }}
+        >
+          <video
+            ref={userVideoRef}
+            className="w-full h-full object-cover rounded-xl"
+            autoPlay
+            playsInline
+            muted
+          />
+          <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
+            <span className="text-white/90 text-xs font-medium">You</span>
+          </div>
         </div>
       </div>
 
