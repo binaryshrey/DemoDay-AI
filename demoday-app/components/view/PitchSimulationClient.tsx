@@ -434,7 +434,7 @@ export default function PitchSimulationClient({
             </a>
             <ProfileMenu user={user} />
           </div>
-          <h1 className="text-white text-2xl font-semibold">
+          <h1 className="text-white text-3xl font-semibold mt-2">
             DemoDay Investor Pitch
           </h1>
         </nav>
@@ -517,7 +517,7 @@ export default function PitchSimulationClient({
       {/* Scaled Video Container - Centered with rounded corners */}
       <div
         className="relative w-full max-w-5xl aspect-video bg-black"
-        style={{ borderRadius: "48px", overflow: "hidden" }}
+        style={{ borderRadius: "20px", overflow: "hidden" }}
       >
         <video
           ref={videoRef}
@@ -600,7 +600,7 @@ export default function PitchSimulationClient({
       </div>
 
       {/* User Video Preview - Bottom Right */}
-      <div className="absolute bottom-6 right-6 w-72 h-48 overflow-hidden">
+      <div className="absolute bottom-6 right-6 w-64 h-40 overflow-hidden">
         <div
           className="relative w-full h-full bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl shadow-2xl"
           style={{
