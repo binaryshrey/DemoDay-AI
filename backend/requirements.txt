@@ -1,0 +1,16 @@
+# Web framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# Google Cloud / Vertex AI
+google-cloud-aiplatform>=1.49.0
+google-cloud-storage>=2.14.0
+
+# Supabase client
+supabase>=2.4.0
+
+# Environment variables
+python-dotenv>=1.0.1
+
+# Data validation
+pydantic>=2.6.0
