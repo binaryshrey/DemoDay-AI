@@ -469,8 +469,8 @@ export default function OnboardForm() {
             <Textarea
               id="content"
               placeholder="Describe your startup, product, team, and vision..."
-              rows={10}
-              className="w-full resize-none min-h-25"
+              rows={2}
+              className="w-full resize-none min-h-20"
             />
           </div>
 
