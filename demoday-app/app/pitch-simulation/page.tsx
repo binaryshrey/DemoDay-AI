@@ -4,16 +4,18 @@ import PitchSimulationClient from "../../components/view/PitchSimulationClient";
 export default async function PitchSimulation({
   searchParams,
 }: {
-  searchParams: { autoStart?: string; duration?: string };
+  searchParams: Promise<{ autoStart?: string; duration?: string }>;
 }) {
-  const { user } = await withAuth();
+  // In Next.js App Router, searchParams is a Promise in server components
+  const resolvedSearchParams = await searchParams;
 
+  const { user } = await withAuth();
   if (!user) return null;
 
   // Always auto-start unless explicitly disabled
-  const autoStart = searchParams.autoStart !== "false";
-  const duration = searchParams.duration
-    ? parseFloat(searchParams.duration)
+  const autoStart = resolvedSearchParams?.autoStart !== "false";
+  const duration = resolvedSearchParams?.duration
+    ? parseFloat(resolvedSearchParams.duration)
     : 2; // Default 2 minutes
 
   return (
