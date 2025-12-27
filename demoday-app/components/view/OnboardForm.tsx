@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Check, X, Camera, Mic } from "lucide-react";
+import {
+  Loader2,
+  Check,
+  X,
+  Camera,
+  Mic,
+  Upload,
+  FileText,
+  Trash2,
+} from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
@@ -19,12 +28,32 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Button } from "../ui/button";
+import { uploadMultipleFilesToGCS } from "@/lib/gcsUpload";
 
 export default function OnboardForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "permissions">("form");
   const [duration, setDuration] = useState("1"); // Duration in minutes
+
+  // File upload states
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{
+    uploading: boolean;
+    completed: number;
+    total: number;
+    uploadedFiles: Array<{
+      gcs_bucket: string;
+      gcs_object_path: string;
+      public_url: string;
+      filename: string;
+    }>;
+  }>({
+    uploading: false,
+    completed: 0,
+    total: 0,
+    uploadedFiles: [],
+  });
 
   // Permission states
   const [micPermission, setMicPermission] = useState<
@@ -71,6 +100,93 @@ export default function OnboardForm() {
     }
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter((file) => {
+      const isPDF = file.type === "application/pdf";
+      const isPPTX =
+        file.type ===
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+      return isPDF || isPPTX;
+    });
+
+    if (validFiles.length !== fileArray.length) {
+      alert("Only PDF and PPTX files are allowed");
+    }
+
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFiles = async () => {
+    if (selectedFiles.length === 0) return;
+
+    setUploadProgress({
+      uploading: true,
+      completed: 0,
+      total: selectedFiles.length,
+      uploadedFiles: [],
+    });
+
+    try {
+      const results = await uploadMultipleFilesToGCS(
+        selectedFiles,
+        "pitch_sessions",
+        (completed, total) => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            completed,
+            total,
+          }));
+        }
+      );
+
+      const successfulUploads = results.filter((r) => r.success);
+
+      setUploadProgress((prev) => ({
+        ...prev,
+        uploading: false,
+        uploadedFiles: successfulUploads.map((r) => ({
+          gcs_bucket: (r as any).gcs_bucket,
+          gcs_object_path: (r as any).gcs_object_path,
+          public_url: (r as any).public_url,
+          filename: r.filename,
+        })),
+      }));
+
+      // Log uploaded files info
+      console.log("✅ Files uploaded successfully:");
+      successfulUploads.forEach((file: any, index: number) => {
+        console.log(`\n📄 File ${index + 1}:`, {
+          filename: file.filename,
+          size: `${(file.size / 1024).toFixed(2)} KB`,
+          contentType: file.contentType,
+          gcs_bucket: file.gcs_bucket,
+          gcs_object_path: file.gcs_object_path,
+          public_url: file.public_url,
+        });
+      });
+
+      // Clear selected files after successful upload
+      setSelectedFiles([]);
+
+      return successfulUploads;
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadProgress((prev) => ({
+        ...prev,
+        uploading: false,
+      }));
+      throw error;
     }
   };
 
@@ -129,13 +245,27 @@ export default function OnboardForm() {
     }
   };
 
-  const handleContinueToPermissions = () => {
-    setStep("permissions");
-    // Auto-request permissions when step changes
-    setTimeout(() => {
-      requestMicrophonePermission();
-      requestCameraPermission();
-    }, 500);
+  const handleContinueToPermissions = async () => {
+    setIsLoading(true);
+
+    try {
+      // Upload files if any are selected
+      if (selectedFiles.length > 0) {
+        await uploadFiles();
+      }
+
+      setStep("permissions");
+      // Auto-request permissions when step changes
+      setTimeout(() => {
+        requestMicrophonePermission();
+        requestCameraPermission();
+      }, 500);
+    } catch (error) {
+      console.error("Error during setup:", error);
+      alert("Failed to upload files. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleStartPitch = () => {
@@ -359,10 +489,10 @@ export default function OnboardForm() {
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0.5">30 seconds</SelectItem>
-                  <SelectItem value="1">1 minute</SelectItem>
-                  <SelectItem value="3">3 minutes</SelectItem>
-                  <SelectItem value="5">5 minutes</SelectItem>
+                  <SelectItem value="30">30 seconds</SelectItem>
+                  <SelectItem value="60">1 minute</SelectItem>
+                  <SelectItem value="120">2 minutes</SelectItem>
+                  <SelectItem value="180">3 minutes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -390,11 +520,11 @@ export default function OnboardForm() {
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="professional">💼 Professional</SelectItem>
-                  <SelectItem value="friendly">😊 Friendly</SelectItem>
-                  <SelectItem value="assertive">💪 Assertive</SelectItem>
-                  <SelectItem value="casual">👋 Casual</SelectItem>
-                  <SelectItem value="formal">🎩 Formal</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="friendly">Friendly</SelectItem>
+                  <SelectItem value="assertive">Assertive</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -487,30 +617,105 @@ export default function OnboardForm() {
                 type="file"
                 accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                 multiple
+                onChange={handleFileSelect}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                disabled={uploadProgress.uploading}
               />
               <div className="w-full h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 transition-colors">
-                <svg
-                  className="w-8 h-8 text-gray-00"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-gray-700">
-                    Click to upload or drag and drop
-                  </p>
-                  <p className="text-xs text-gray-500">PDF or PPTX files</p>
-                </div>
+                {uploadProgress.uploading ? (
+                  <>
+                    <Loader2 className="w-8 h-8 text-[#fc7249] animate-spin" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">
+                        Uploading {uploadProgress.completed} of{" "}
+                        {uploadProgress.total}...
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-8 h-8 text-gray-400" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">PDF or PPTX files</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
+
+            {/* Display selected files */}
+            {selectedFiles.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs font-medium text-gray-700">
+                  Selected Files ({selectedFiles.length})
+                </p>
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-gray-500 shrink-0" />
+                        <span className="text-sm text-gray-700 truncate">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-gray-500 shrink-0">
+                          ({(file.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="text-red-500 hover:text-red-700 ml-2"
+                        type="button"
+                        disabled={uploadProgress.uploading}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Display uploaded files */}
+            {uploadProgress.uploadedFiles.length > 0 && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Check className="w-4 h-4 text-green-600" />
+                  <p className="text-xs font-medium text-green-700">
+                    {uploadProgress.uploadedFiles.length} file(s) uploaded
+                    successfully
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {uploadProgress.uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-2 bg-white p-2 rounded"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-3 h-3 text-green-600 shrink-0" />
+                        <span className="text-xs text-green-700 truncate">
+                          {file.filename}
+                        </span>
+                      </div>
+                      <a
+                        href={file.public_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 underline shrink-0"
+                      >
+                        View
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
