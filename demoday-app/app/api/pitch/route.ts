@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sessionQueue } from "@/lib/sessionQueue";
+import getRotatedAnamApiKey from "@/lib/keyRotation";
 
 export async function GET(request: NextRequest) {
-  const anamApiKey = process.env.ANAM_INVESTOR_API_KEY;
+  // get rotated key from Redis (Upstash) or fallback
+  const anamApiKey = await getRotatedAnamApiKey("investor");
   const avatarInvestorId = process.env.ANAM_INVESTOR_AVATAR_ID;
   const elevenLabsInvestorAgentId = process.env.ELEVENLABS_INVESTOR_AGENT_ID;
   const anamAuthURI = process.env.ANAM_AUTH_URI;

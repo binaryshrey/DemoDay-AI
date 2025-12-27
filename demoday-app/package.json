@@ -17,6 +17,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@remixicon/react": "^4.7.0",
+    "@upstash/redis": "^1.36.0",
     "@workos-inc/authkit-nextjs": "^2.12.1",
     "chatdio": "^1.2.4",
     "class-variance-authority": "^0.7.1",
