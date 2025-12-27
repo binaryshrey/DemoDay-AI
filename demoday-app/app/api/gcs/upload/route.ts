@@ -21,6 +21,20 @@ export async function POST(req: Request) {
     // For local dev: use the credentials file if specified
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       storageOptions.keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    } else if (process.env.GCP_CREDENTIALS_BASE64) {
+      // For production (Vercel): use credentials from environment variable
+      // Supports both service_account and authorized_user types
+      // The credentials should be base64-encoded JSON
+      try {
+        const decodedKey = Buffer.from(
+          process.env.GCP_CREDENTIALS_BASE64,
+          "base64"
+        ).toString("utf-8");
+        storageOptions.credentials = JSON.parse(decodedKey);
+      } catch (parseError) {
+        console.error("Failed to parse GCP_CREDENTIALS_BASE64:", parseError);
+        throw new Error("Invalid GCP credentials");
+      }
     }
 
     const storage = new Storage(storageOptions);
