@@ -873,7 +873,14 @@ export default function OnboardForm({ user }: OnboardFormProps) {
         size="lg"
         className="w-full px-8 py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
       >
-        Continue to Device Setup
+        {isLoading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            Processing...
+          </>
+        ) : (
+          "Continue to Device Setup"
+        )}
       </Button>
     </div>
   );
