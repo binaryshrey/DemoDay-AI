@@ -11,6 +11,7 @@ import {
   Upload,
   FileText,
   Trash2,
+  AlertCircle,
 } from "lucide-react";
 import {
   InputGroup,
@@ -28,13 +29,36 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Button } from "../ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { uploadMultipleFilesToGCS } from "@/lib/gcsUpload";
 
-export default function OnboardForm() {
+interface User {
+  id: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+}
+
+interface OnboardFormProps {
+  user: User;
+}
+
+export default function OnboardForm({ user }: OnboardFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"form" | "permissions">("form");
-  const [duration, setDuration] = useState("1"); // Duration in minutes
+  const [duration, setDuration] = useState("60"); // Duration in seconds
+  const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    startupName: "",
+    websiteLink: "",
+    githubLink: "",
+    content: "",
+    language: "en",
+    tone: "professional",
+  });
 
   // File upload states
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -128,7 +152,7 @@ export default function OnboardForm() {
   };
 
   const uploadFiles = async () => {
-    if (selectedFiles.length === 0) return;
+    if (selectedFiles.length === 0) return [];
 
     setUploadProgress({
       uploading: true,
@@ -247,14 +271,87 @@ export default function OnboardForm() {
 
   const handleContinueToPermissions = async () => {
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Upload files if any are selected
-      if (selectedFiles.length > 0) {
-        await uploadFiles();
+      // Step 1: Validate required fields
+      if (!formData.startupName.trim()) {
+        throw new Error("Startup name is required");
       }
 
+      let uploadedFiles: any[] = [];
+
+      // Step 2: Upload files if any are selected
+      if (selectedFiles.length > 0) {
+        console.log("Uploading files to GCS...");
+        uploadedFiles = await uploadFiles();
+
+        if (!uploadedFiles || uploadedFiles.length === 0) {
+          throw new Error("File upload failed. Please try again.");
+        }
+
+        console.log("✅ Files uploaded successfully");
+      }
+
+      // Step 3: Prepare data for pitch-sessions API
+      const apiUrl = process.env.NEXT_PUBLIC_DEMODAY_API_URI;
+      if (!apiUrl) {
+        throw new Error(
+          "API URL not configured. Please check environment variables."
+        );
+      }
+
+      const userName =
+        user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`.trim()
+          : user.email.split("@")[0];
+
+      const pitchSessionData = {
+        user_id: user.id,
+        user_name: userName,
+        user_email: user.email,
+        startup_name: formData.startupName,
+        website_link: formData.websiteLink || "",
+        github_link: formData.githubLink || "",
+        content: formData.content || "",
+        duration_seconds: parseInt(duration),
+        language: formData.language,
+        tone: formData.tone,
+        gcp_bucket: uploadedFiles.length > 0 ? uploadedFiles[0].gcs_bucket : "",
+        gcp_object_path:
+          uploadedFiles.length > 0 ? uploadedFiles[0].gcs_object_path : "",
+        gcp_file_url:
+          uploadedFiles.length > 0 ? uploadedFiles[0].public_url : "",
+        feedback: "",
+        review_required: false,
+        score: 0,
+        status: "Pending",
+      };
+
+      console.log("Saving to database via API...", pitchSessionData);
+
+      // Step 4: Save to database via pitch-sessions endpoint
+      const response = await fetch(`${apiUrl}/pitch-sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(pitchSessionData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `Failed to save data: ${response.statusText}`
+        );
+      }
+
+      const savedSession = await response.json();
+      console.log("✅ Data saved successfully:", savedSession);
+
+      // Step 5: Move to permissions step
       setStep("permissions");
+
       // Auto-request permissions when step changes
       setTimeout(() => {
         requestMicrophonePermission();
@@ -262,7 +359,12 @@ export default function OnboardForm() {
       }, 500);
     } catch (error) {
       console.error("Error during setup:", error);
-      alert("Failed to upload files. Please try again.");
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      setError(errorMessage);
+
+      // Scroll to top to show error
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsLoading(false);
     }
@@ -470,6 +572,15 @@ export default function OnboardForm() {
   }
   return (
     <div className="mt-8 space-y-3">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
       {/* First Input Group - Configuration with Selects */}
       <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
         <div className="flex items-center justify-between gap-6">
@@ -500,7 +611,12 @@ export default function OnboardForm() {
               <label className="text-sm font-medium text-gray-700">
                 Language
               </label>
-              <Select defaultValue="en">
+              <Select
+                value={formData.language}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, language: value }))
+                }
+              >
                 <SelectTrigger className="w-45 cursor-pointer">
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -515,7 +631,12 @@ export default function OnboardForm() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Tone</label>
-              <Select defaultValue="professional">
+              <Select
+                value={formData.tone}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, tone: value }))
+                }
+              >
                 <SelectTrigger className="w-45 cursor-pointer">
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
@@ -540,13 +661,21 @@ export default function OnboardForm() {
               htmlFor="startupName"
               className="text-sm font-medium text-gray-700"
             >
-              Startup Name
+              Startup Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="startupName"
               type="text"
               placeholder="Enter your startup name"
               className="w-full"
+              value={formData.startupName}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  startupName: e.target.value,
+                }))
+              }
+              required
             />
           </div>
 
@@ -563,6 +692,13 @@ export default function OnboardForm() {
                   id="website"
                   placeholder="example.com"
                   className="pl-1!"
+                  value={formData.websiteLink}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      websiteLink: e.target.value,
+                    }))
+                  }
                 />
                 <InputGroupAddon>
                   <InputGroupText>https://</InputGroupText>
@@ -581,6 +717,13 @@ export default function OnboardForm() {
                   id="github"
                   placeholder="github.com/username/repo"
                   className="pl-1!"
+                  value={formData.githubLink}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      githubLink: e.target.value,
+                    }))
+                  }
                 />
                 <InputGroupAddon>
                   <InputGroupText>https://</InputGroupText>
@@ -601,6 +744,10 @@ export default function OnboardForm() {
               placeholder="Describe your startup, product, team, and vision..."
               rows={2}
               className="w-full resize-none min-h-20"
+              value={formData.content}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, content: e.target.value }))
+              }
             />
           </div>
 

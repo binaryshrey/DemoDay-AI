@@ -34,7 +34,7 @@ export default async function Onboard() {
           </p>
         </div>
 
-        <OnboardForm />
+        <OnboardForm user={user} />
       </div>
     </div>
   );
