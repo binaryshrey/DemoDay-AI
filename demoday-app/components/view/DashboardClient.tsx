@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import {
@@ -15,18 +16,119 @@ interface DashboardClientProps {
   greeting: string;
   formattedDate: string;
   userName: string;
+  userId?: string | null;
 }
 
 export default function DashboardClient({
   greeting,
   formattedDate,
   userName,
+  userId,
 }: DashboardClientProps) {
   const router = useRouter();
+
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Helper: format duration seconds to friendly string
+  const formatDuration = (secs: number) => {
+    if (!secs) return "-";
+    const mins = Math.round(secs / 60);
+    if (mins < 60) return `${mins} mins`;
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return `${hours}h ${remMins}m`;
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "Completed":
+        return "px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800";
+      case "Pending":
+        return "px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800";
+      case "Review Needed":
+        return "px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800";
+      default:
+        return "px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800";
+    }
+  };
+
+  useEffect(() => {
+    // Fetch the user's pitch sessions from the external FastAPI endpoint
+    const fetchSessions = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        if (!userId) {
+          throw new Error("No user id available");
+        }
+        const limit = 20;
+        const res = await fetch(
+          `https://demoday-ai-backend-uvhm6z3sbq-ez.a.run.app/pitch-sessions?user_id=${encodeURIComponent(
+            userId
+          )}&limit=${limit}`
+        );
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const data = await res.json();
+        // Expecting an array of pitch session objects
+        setSessions(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        console.error(err);
+        setError(err?.message || "Unknown error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, [userId]);
 
   const handleNewPitchClick = () => {
     router.push("/onboard");
   };
+
+  // Computed metrics derived from fetched sessions
+  const completedCount = sessions.filter(
+    (s) => (s.status ?? "") === "Completed"
+  ).length;
+  const completedPct = sessions.length
+    ? ((completedCount / sessions.length) * 100).toFixed(2)
+    : "0.00";
+
+  // Average score: compute only over numeric scores and format to 1 decimal place
+  const scoredSessions = sessions.filter((s) => typeof s.score === "number");
+  const avgScore = scoredSessions.length
+    ? (
+        scoredSessions.reduce((acc, cur) => acc + (cur.score ?? 0), 0) /
+        scoredSessions.length
+      ).toFixed(1)
+    : "0.0";
+
+  // Total time across sessions (in seconds -> convert to hours and minutes)
+  const totalSeconds = sessions.reduce(
+    (acc, s) => acc + (s.duration_seconds ?? s.duration ?? 0),
+    0
+  );
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const totalRemMins = totalMinutes % 60;
+
+  // Client-side search: filter sessions by startup name, content or feedback
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const displayedSessions = normalizedQuery
+    ? sessions.filter((s) => {
+        const name = (s.startup_name || "").toString().toLowerCase();
+        const content = (s.content || "").toString().toLowerCase();
+        const feedback = (s.feedback || "").toString().toLowerCase();
+        return (
+          name.includes(normalizedQuery) ||
+          content.includes(normalizedQuery) ||
+          feedback.includes(normalizedQuery)
+        );
+      })
+    : sessions;
 
   return (
     <div>
@@ -38,6 +140,8 @@ export default function DashboardClient({
             type="text"
             placeholder="Search your pitch sessions"
             className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         <Button
@@ -72,7 +176,9 @@ export default function DashboardClient({
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
           </div>
-          <p className="text-gray-900 text-3xl font-bold">24</p>
+          <p className="text-gray-900 text-3xl font-bold">
+            {isLoading ? "..." : sessions.length}
+          </p>
         </div>
 
         {/* Completed Sessions */}
@@ -86,7 +192,10 @@ export default function DashboardClient({
             </div>
           </div>
           <p className="text-gray-900 text-3xl font-bold">
-            18 <span className="text-lg text-gray-700 font-normal">(75%)</span>
+            {isLoading ? "..." : completedCount}{" "}
+            <span className="text-lg text-gray-700 font-normal">
+              ({isLoading ? "..." : `${completedPct}%`})
+            </span>
           </p>
         </div>
 
@@ -98,7 +207,9 @@ export default function DashboardClient({
               <DollarSign className="w-5 h-5 text-white" />
             </div>
           </div>
-          <p className="text-gray-900 text-3xl font-bold">8.2/10</p>
+          <p className="text-gray-900 text-3xl font-bold">
+            {isLoading ? "..." : `${avgScore}/10`}
+          </p>
         </div>
 
         {/* Total Time on Pitches */}
@@ -112,7 +223,16 @@ export default function DashboardClient({
             </div>
           </div>
           <p className="text-gray-900 text-3xl font-bold">
-            42h <span className="text-lg text-gray-700 font-normal">30m</span>
+            {isLoading ? (
+              "..."
+            ) : (
+              <>
+                {totalHours}h{" "}
+                <span className="text-lg text-gray-700 font-normal">
+                  {totalRemMins}m
+                </span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -149,196 +269,71 @@ export default function DashboardClient({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* Row 1 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH001
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  AI SaaS Platform
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  45 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Strong value proposition, needs market validation
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  8.5/10
-                </td>
-              </tr>
-
-              {/* Row 2 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH002
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  HealthTech App
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  38 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Great user interface, consider partnership opportunities
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  9.0/10
-                </td>
-              </tr>
-
-              {/* Row 3 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH003
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  EdTech Solution
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  52 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Improve monetization strategy and content quality
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Pending
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  7.8/10
-                </td>
-              </tr>
-
-              {/* Row 4 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH004
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  FinTech Startup
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  41 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Address regulatory concerns and scalability issues
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                    Review Needed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  6.5/10
-                </td>
-              </tr>
-
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH005
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Green Energy Tech
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  55 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Excellent vision, strong team, ready for investment
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  9.5/10
-                </td>
-              </tr>
-
-              {/* Row 6 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH006
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  E-Commerce Platform
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  42 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Strong market fit, focus on customer acquisition
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  8.2/10
-                </td>
-              </tr>
-
-              {/* Row 7 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH007
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Travel Tech App
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  36 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Innovative concept, needs better revenue model
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                    Pending
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  7.5/10
-                </td>
-              </tr>
-
-              {/* Row 8 */}
-              <tr className="hover:bg-gray-50 cursor-pointer">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  #PITCH008
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Blockchain Solution
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  48 mins
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                  Solid technology, clarify use cases and go-to-market
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Completed
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  8.8/10
-                </td>
-              </tr>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-sm text-gray-500"
+                  >
+                    Loading pitch sessions...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-sm text-red-500"
+                  >
+                    Error: {error}
+                  </td>
+                </tr>
+              ) : sessions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-sm text-gray-500"
+                  >
+                    No pitch sessions found.
+                  </td>
+                </tr>
+              ) : displayedSessions.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-sm text-gray-500"
+                  >
+                    No sessions match your search.
+                  </td>
+                </tr>
+              ) : (
+                displayedSessions.map((s, idx) => (
+                  <tr
+                    key={s.id || idx}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {idx + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {s.startup_name || s.content || "-"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatDuration(s.duration_seconds ?? s.duration ?? 0)}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                      {s.feedback || "-"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={getStatusBadgeClass(s.status ?? "")}>
+                        {s.status ?? "-"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      {s.score != null ? `${s.score}/10` : "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

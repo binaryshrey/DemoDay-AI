@@ -132,16 +132,27 @@ export default function OnboardForm({ user }: OnboardFormProps) {
     if (!files) return;
 
     const fileArray = Array.from(files);
+
+    // Accept files based on either a known MIME type OR a matching file extension.
+    // Some platforms/browsers may leave `file.type` empty or use different MIME
+    // values for PowerPoint files, so checking the filename extension is more
+    // reliable in practice.
     const validFiles = fileArray.filter((file) => {
-      const isPDF = file.type === "application/pdf";
+      const name = file.name.toLowerCase();
+      const isPDF = file.type === "application/pdf" || name.endsWith(".pdf");
       const isPPTX =
         file.type ===
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-      return isPDF || isPPTX;
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation" ||
+        name.endsWith(".pptx");
+      const isPPT =
+        file.type === "application/vnd.ms-powerpoint" || name.endsWith(".ppt");
+      return isPDF || isPPTX || isPPT;
     });
 
     if (validFiles.length !== fileArray.length) {
-      alert("Only PDF and PPTX files are allowed");
+      alert(
+        "Only PDF, PPTX or PPT files are allowed. Unsupported files were ignored."
+      );
     }
 
     setSelectedFiles((prev) => [...prev, ...validFiles]);
@@ -762,7 +773,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
               <input
                 id="attachments"
                 type="file"
-                accept=".pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                accept=".pdf,.pptx,.ppt,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint"
                 multiple
                 onChange={handleFileSelect}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"

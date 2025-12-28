@@ -75,6 +75,7 @@ export default async function DashboardPage() {
         greeting={greeting}
         formattedDate={formattedDate}
         userName={userName}
+        userId={user.id ?? user.email}
       />
     </DashboardLayout>
   );
