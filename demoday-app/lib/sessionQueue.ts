@@ -46,10 +46,21 @@ class SessionQueueManager {
     );
 
     return new Promise((resolve, reject) => {
+      // If a queued request sits too long, reject it so callers don't hang forever.
+      const WAIT_TIMEOUT_MS = 30_000; // 30 seconds
+
+      let waitTimer: NodeJS.Timeout | null = null;
+
       const queueItem: QueueItem = {
         id: sessionId,
         type,
         resolve: async () => {
+          // Clear the wait timer when we start processing this item
+          if (waitTimer) {
+            clearTimeout(waitTimer);
+            waitTimer = null;
+          }
+
           this.activeSessions.add(sessionId);
           try {
             await fetchToken();
@@ -62,6 +73,19 @@ class SessionQueueManager {
         reject,
         timestamp: Date.now(),
       };
+
+      // Start a timer that will remove this item from the queue and reject
+      waitTimer = setTimeout(() => {
+        // Remove from queue if still present
+        this.queue = this.queue.filter((it) => it.id !== sessionId);
+        try {
+          queueItem.reject(
+            new Error("Session request timed out waiting in queue")
+          );
+        } catch (e) {
+          /* ignore */
+        }
+      }, WAIT_TIMEOUT_MS);
 
       this.queue.push(queueItem);
 

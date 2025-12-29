@@ -64,11 +64,16 @@ async function setupMicrophone() {
  */
 export async function connectElevenLabs(
   agentId: string,
-  callbacks: ElevenLabsCallbacks
+  callbacks: ElevenLabsCallbacks,
+  initialAgentMessage?: string
 ) {
   websocket = new WebSocket(
     `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`
   );
+
+  // Keep a pending message that will be injected once the conversation
+  // has emitted its initiation metadata (server-ready).
+  let pendingInitialMessage: string | undefined = initialAgentMessage;
 
   websocket.onopen = async () => {
     console.log("[11Labs] WebSocket connected");
@@ -88,6 +93,32 @@ export async function connectElevenLabs(
           conversationId: meta?.conversation_id,
           audioFormat: meta?.agent_output_audio_format,
         });
+        // If the caller provided an initial message (e.g., tts_summary),
+        // inject it now that the conversation is initialized.
+        if (pendingInitialMessage) {
+          try {
+            // Use the same best-effort injection pathway.
+            const preferred = {
+              type: "synthesize_and_play",
+              text: pendingInitialMessage,
+            };
+            websocket?.send(JSON.stringify(preferred));
+            const fallback = {
+              type: "agent_response_injection",
+              agent_response: pendingInitialMessage,
+            };
+            websocket?.send(JSON.stringify(fallback));
+            console.log(
+              "[11Labs] Sent pending initial agent message (best-effort)"
+            );
+          } catch (err) {
+            console.error(
+              "[11Labs] Failed to send pending initial message:",
+              err
+            );
+          }
+          pendingInitialMessage = undefined;
+        }
         break;
       }
 
@@ -162,4 +193,34 @@ export function stopElevenLabs() {
   websocket = null;
   micCapture?.stop();
   micCapture = null;
+}
+
+/**
+ * Best-effort: Inject a text message to the ElevenLabs conversation so the
+ * agent speaks it. The exact socket message schema for injection may vary
+ * depending on ElevenLabs server support; we attempt a couple of likely
+ * payload shapes. This is a client-side best-effort helper — server may
+ * ignore unknown message types.
+ */
+export function injectAgentMessage(text: string): boolean {
+  if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+    console.warn("[11Labs] Cannot inject agent message; websocket not open");
+    return false;
+  }
+
+  try {
+    // Preferred: ask server to synthesize and play text (some servers accept this)
+    const preferred = { type: "synthesize_and_play", text };
+    websocket.send(JSON.stringify(preferred));
+
+    // Fallback: send an agent_response-like object which some proxies may accept
+    const fallback = { type: "agent_response_injection", agent_response: text };
+    websocket.send(JSON.stringify(fallback));
+
+    console.log("[11Labs] Injected agent message (best-effort)");
+    return true;
+  } catch (err) {
+    console.error("[11Labs] Failed to inject agent message:", err);
+    return false;
+  }
 }

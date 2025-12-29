@@ -383,6 +383,16 @@ export default function PitchSimulationClient({
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     console.log("[Session] Navigating to feedback page");
+    try {
+      // Persist the full conversation so the feedback page can access it
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("pitch_conversation", JSON.stringify(messages));
+        console.log("[Session] Saved conversation to sessionStorage");
+      }
+    } catch (err) {
+      console.error("[Session] Failed to save conversation:", err);
+    }
+
     router.push("/feedback");
   };
 
@@ -696,14 +706,45 @@ export default function PitchSimulationClient({
         </div>
       )}
 
-      {/* Error Display - Top Center */}
-      {error && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 max-w-md">
-          <div className="bg-red-600/90 backdrop-blur-md border border-red-400 rounded-lg px-6 py-3 shadow-xl">
-            <p className="text-white text-sm font-medium">{error}</p>
+      {/* Error Toast - Top Right */}
+      <div className="fixed top-6 right-6 z-50">
+        {error && (
+          <div className="max-w-xs">
+            <div className="flex items-start gap-3 bg-red-600/95 backdrop-blur-md border border-red-400 rounded-lg px-4 py-3 shadow-xl animate-slide-in-right">
+              <svg
+                className="w-5 h-5 text-white/90 mt-0.5"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M12 9v4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 17h.01"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div className="flex-1">
+                <p className="text-white text-sm font-medium">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-white/80 hover:text-white ml-2"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

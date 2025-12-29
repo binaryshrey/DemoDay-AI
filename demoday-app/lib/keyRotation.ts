@@ -25,12 +25,34 @@ export async function getRotatedAnamApiKey(
         keyName
       )}`;
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      // Small timeout wrapper to avoid hangs when Upstash is unreachable
+      const fetchWithTimeout = async (
+        u: string,
+        opts: RequestInit = {},
+        timeoutMs = 5000
+      ) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const r = await fetch(u, { ...opts, signal: controller.signal });
+          clearTimeout(id);
+          return r;
+        } catch (e) {
+          clearTimeout(id);
+          throw e;
+        }
+      };
+
+      const res = await fetchWithTimeout(
+        url,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+        5000
+      );
 
       if (!res.ok) {
         const text = await res.text();

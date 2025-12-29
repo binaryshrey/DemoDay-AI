@@ -33,24 +33,52 @@ export async function GET(request: NextRequest) {
     let anamToken: string | null = null;
 
     // Wait for our turn in the queue
+    // Helper: fetch with a timeout so we don't hang indefinitely
+    const fetchWithTimeout = async (
+      url: string,
+      options: RequestInit = {},
+      timeoutMs = 10000
+    ) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return res;
+      } catch (err) {
+        clearTimeout(id);
+        throw err;
+      }
+    };
+
     const sessionId = await sessionQueue.requestSession("pitch", async () => {
       console.log("[Pitch API] Fetching Anam token...");
-      const response = await fetch(anamAuthURI, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${anamApiKey}`,
-        },
-        body: JSON.stringify({
-          personaConfig: {
-            avatarId: avatarInvestorId,
-            enableAudioPassthrough: true,
+      let response: Response;
+      try {
+        response = await fetchWithTimeout(
+          anamAuthURI,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${anamApiKey}`,
+            },
+            body: JSON.stringify({
+              personaConfig: {
+                avatarId: avatarInvestorId,
+                enableAudioPassthrough: true,
+              },
+            }),
           },
-        }),
-      });
+          10000
+        );
+      } catch (err) {
+        console.error("[Pitch API] Anam auth fetch error:", err);
+        throw new Error("Timed out or failed to reach Anam auth endpoint");
+      }
 
       if (!response.ok) {
-        const error = await response.text();
+        const error = await response.text().catch(() => response.statusText);
         console.error("Anam API error:", error);
         throw new Error("Failed to get Anam session token");
       }

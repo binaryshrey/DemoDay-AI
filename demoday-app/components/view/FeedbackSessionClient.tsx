@@ -55,6 +55,7 @@ export default function FeedbackSessionClient({
   const anamSessionIdRef = useRef<string | null>(null);
   const queueSessionIdRef = useRef<string | null>(null); // Store queue session ID for cleanup
   const hasInitialized = useRef(false);
+  const ttsSummaryRef = useRef<string | null>(null);
   const userStreamRef = useRef<MediaStream | null>(null);
 
   // Initialize session on mount - now safe with separate API key
@@ -70,6 +71,97 @@ export default function FeedbackSessionClient({
       hasInitialized.current = true;
 
       try {
+        // Before initializing the feedback avatar, send the pitch transcript
+        // to the feedback API so we can retrieve a concise TTS summary.
+        try {
+          if (typeof window !== "undefined") {
+            const raw = sessionStorage.getItem("pitch_conversation");
+            if (!raw) {
+              throw new Error("No pitch conversation found in sessionStorage.");
+            }
+
+            const rawMessages: Message[] = JSON.parse(raw);
+
+            // Normalize and build payload
+            type RawMsg = { role: "system" | "agent" | "user"; text: string };
+            type QAMsg = {
+              role: "system" | "assistant" | "user";
+              text: string;
+            };
+
+            const normalizeTranscript = (messages: RawMsg[]): QAMsg[] =>
+              messages
+                .map((m) => ({
+                  role: (m.role === "agent"
+                    ? "assistant"
+                    : m.role) as QAMsg["role"],
+                  text: (m.text ?? "").trim(),
+                }))
+                .filter((m) => m.text.length > 0) as unknown as QAMsg[];
+
+            const buildPitchTextUserOnly = (messages: QAMsg[]) =>
+              messages
+                .filter((m) => m.role === "user")
+                .map((m) => m.text)
+                .join("\n\n");
+
+            const qa_transcript = normalizeTranscript(rawMessages as RawMsg[]);
+            const pitch_text = buildPitchTextUserOnly(qa_transcript);
+
+            const payload = {
+              pitch_text,
+              top_k: 6,
+              qa_transcript,
+            };
+
+            // Resolve backend API base from env (client-safe NEXT_PUBLIC var)
+            const apiBase = (
+              process.env.NEXT_PUBLIC_DEMODAY_API_URI ||
+              (process.env.DEMODAY_API_URI as string) ||
+              ""
+            ).replace(/\/$/, "");
+
+            if (!apiBase) {
+              throw new Error(
+                "DEMODAY API URL not configured. Please set NEXT_PUBLIC_DEMODAY_API_URI in .env.local"
+              );
+            }
+
+            console.log(
+              `[Feedback] Sending transcript to ${apiBase}/pitch/feedback`,
+              payload
+            );
+
+            const fbRes = await fetch(`${apiBase}/pitch/feedback`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+
+            if (!fbRes.ok) {
+              const text = await fbRes.text().catch(() => fbRes.statusText);
+              throw new Error(`Feedback API failed: ${fbRes.status} ${text}`);
+            }
+
+            const fbJson = await fbRes.json();
+            console.log("[Feedback] Received feedback response:", fbJson);
+
+            // Extract tts_summary and store for speaking later
+            if (fbJson?.tts_summary) {
+              ttsSummaryRef.current = fbJson.tts_summary;
+            }
+          }
+        } catch (err) {
+          console.error("[Feedback] Error while sending transcript:", err);
+          showError(
+            err instanceof Error ? err.message : "Failed to evaluate pitch."
+          );
+          // Abort initialization if feedback call failed
+          hasInitialized.current = false;
+          setIsInitializing(false);
+          return;
+        }
+
         // Clean up any existing sessions
         if (anamClientRef.current) {
           try {
@@ -283,35 +375,40 @@ export default function FeedbackSessionClient({
       );
 
       // Connect to ElevenLabs using the pre-initialized audio stream
-      await connectElevenLabs(configRef.current.elevenLabsAgentId, {
-        onReady: () => {
-          setIsConnected(true);
-          addMessage(
-            "system",
-            "Connected. Your AI coach is ready to provide feedback."
-          );
+      await connectElevenLabs(
+        configRef.current.elevenLabsAgentId,
+        {
+          onReady: () => {
+            setIsConnected(true);
+            addMessage(
+              "system",
+              "Connected. Your AI coach is ready to provide feedback."
+            );
+          },
+          onAudio: (audio: string) => {
+            agentAudioInputStreamRef.current?.sendAudioChunk(audio);
+          },
+          onUserTranscript: (text: string) => addMessage("user", text),
+          onAgentResponse: (text: string) => {
+            agentAudioInputStreamRef.current?.endSequence();
+            addMessage("agent", text);
+          },
+          onInterrupt: () => {
+            addMessage("system", "Interrupted");
+            anamClientRef.current?.interruptPersona();
+            agentAudioInputStreamRef.current?.endSequence();
+          },
+          onDisconnect: () => {
+            // Only set isConnected to false if this was an intentional disconnect
+            if (isIntentionalDisconnectRef.current) {
+              setIsConnected(false);
+            }
+          },
+          onError: () => showError("Connection error"),
+          // pass the tts summary so ElevenLabs lib can inject it once ready
         },
-        onAudio: (audio: string) => {
-          agentAudioInputStreamRef.current?.sendAudioChunk(audio);
-        },
-        onUserTranscript: (text: string) => addMessage("user", text),
-        onAgentResponse: (text: string) => {
-          agentAudioInputStreamRef.current?.endSequence();
-          addMessage("agent", text);
-        },
-        onInterrupt: () => {
-          addMessage("system", "Interrupted");
-          anamClientRef.current?.interruptPersona();
-          agentAudioInputStreamRef.current?.endSequence();
-        },
-        onDisconnect: () => {
-          // Only set isConnected to false if this was an intentional disconnect
-          if (isIntentionalDisconnectRef.current) {
-            setIsConnected(false);
-          }
-        },
-        onError: () => showError("Connection error"),
-      });
+        ttsSummaryRef.current ?? undefined
+      );
     } catch (err) {
       showError(err instanceof Error ? err.message : "Failed to start");
     } finally {
