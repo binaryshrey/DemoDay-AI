@@ -333,9 +333,10 @@ export default function OnboardForm({ user }: OnboardFormProps) {
           uploadedFiles.length > 0 ? uploadedFiles[0].gcs_object_path : "",
         gcp_file_url:
           uploadedFiles.length > 0 ? uploadedFiles[0].public_url : "",
-        feedback: "",
+        // backend expects objects for feedback/score (Pydantic Dict[str, Any])
+        feedback: {},
         review_required: false,
-        score: 0,
+        score: {},
         status: "Pending",
       };
 

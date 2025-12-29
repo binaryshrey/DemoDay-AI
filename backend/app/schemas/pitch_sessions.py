@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Literal
+from typing import Optional, Literal, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
 
 StatusType = Literal["Pending", "Completed", "Review Needed"]
@@ -23,16 +23,17 @@ class PitchSessionCreate(BaseModel):
     gcp_object_path: Optional[str] = None
     gcp_file_url: Optional[str] = None  
 
-    feedback: str = ""
+    # JSON-based feedback and score
+    feedback: Dict[str, Any] = Field(default_factory=dict)
     review_required: bool = False
-    score: float = Field(0, ge=0, le=10)
+    score: Dict[str, Any] = Field(default_factory=dict)
     status: StatusType = "Pending"
 
 class PitchSessionUpdate(BaseModel):
     # allow updating review results later
-    feedback: Optional[str] = None
+    feedback: Optional[Dict[str, Any]] = None
     review_required: Optional[bool] = None
-    score: Optional[float] = Field(default=None, ge=0, le=10)
+    score: Optional[Dict[str, Any]] = None
     status: Optional[StatusType] = None
 
     # allow updating file references too (optional)
@@ -60,9 +61,9 @@ class PitchSessionOut(BaseModel):
     gcp_object_path: Optional[str]
     gcp_file_url: Optional[str]
 
-    feedback: str
+    feedback: Dict[str, Any]
     review_required: bool
-    score: float
+    score: Dict[str, Any]
     status: StatusType
 
     created_at: datetime

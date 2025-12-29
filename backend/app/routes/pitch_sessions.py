@@ -33,7 +33,7 @@ def _to_out(row: PitchSession) -> PitchSessionOut:
 
         feedback=row.feedback,
         review_required=row.review_required,
-        score=float(row.score),
+        score=row.score,
         status=row.status,  # type: ignore
 
         created_at=row.created_at,
@@ -63,7 +63,7 @@ def create_pitch_session(payload: PitchSessionCreate, db: Session = Depends(get_
 
             feedback=payload.feedback,
             review_required=payload.review_required,
-            score=round(payload.score, 1),
+            score=payload.score,
             status=payload.status,
 
             updated_at=datetime.utcnow(),
@@ -103,8 +103,8 @@ def update_pitch_session(
 
     data = payload.model_dump(exclude_unset=True)
 
-    if "score" in data and data["score"] is not None:
-        data["score"] = round(float(data["score"]), 1)
+    # if "score" in data and data["score"] is not None:
+    #     data["score"] = round(float(data["score"]), 1)
 
     for k, v in data.items():
         setattr(row, k, v)

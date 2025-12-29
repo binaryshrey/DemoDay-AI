@@ -97,11 +97,27 @@ export default function DashboardClient({
     ? ((completedCount / sessions.length) * 100).toFixed(2)
     : "0.00";
 
-  // Average score: compute only over numeric scores and format to 1 decimal place
-  const scoredSessions = sessions.filter((s) => typeof s.score === "number");
+  // Average score: support legacy numeric `score` or new structured `score.overall_score`.
+  const scoredSessions = sessions
+    .map((s) => {
+      // If new structured score exists, use overall_score/10
+      if (
+        s?.score &&
+        typeof s.score === "object" &&
+        s.score.overall_score != null
+      ) {
+        const n = Number(s.score.overall_score);
+        return isNaN(n) ? null : n / 10;
+      }
+      // Legacy numeric score assumed to be on 0-10 scale
+      if (typeof s.score === "number") return s.score;
+      return null;
+    })
+    .filter((v) => v != null) as number[];
+
   const avgScore = scoredSessions.length
     ? (
-        scoredSessions.reduce((acc, cur) => acc + (cur.score ?? 0), 0) /
+        scoredSessions.reduce((acc, cur) => acc + (cur ?? 0), 0) /
         scoredSessions.length
       ).toFixed(1)
     : "0.0";
@@ -121,7 +137,11 @@ export default function DashboardClient({
     ? sessions.filter((s) => {
         const name = (s.startup_name || "").toString().toLowerCase();
         const content = (s.content || "").toString().toLowerCase();
-        const feedback = (s.feedback || "").toString().toLowerCase();
+        // If feedback is an object, stringify it for search
+        const feedback =
+          s.feedback && typeof s.feedback === "object"
+            ? JSON.stringify(s.feedback).toLowerCase()
+            : (s.feedback || "").toString().toLowerCase();
         return (
           name.includes(normalizedQuery) ||
           content.includes(normalizedQuery) ||
@@ -177,7 +197,7 @@ export default function DashboardClient({
             </div>
           </div>
           <p className="text-gray-900 text-3xl font-bold">
-            {isLoading ? "..." : sessions.length}
+            {isLoading ? "..." : sessions.length === 0 ? "0" : sessions.length}
           </p>
         </div>
 
@@ -192,9 +212,15 @@ export default function DashboardClient({
             </div>
           </div>
           <p className="text-gray-900 text-3xl font-bold">
-            {isLoading ? "..." : completedCount}{" "}
+            {isLoading ? "..." : sessions.length === 0 ? "0" : completedCount}{" "}
             <span className="text-lg text-gray-700 font-normal">
-              ({isLoading ? "..." : `${completedPct}%`})
+              (
+              {isLoading
+                ? "..."
+                : sessions.length === 0
+                ? "0.00%"
+                : `${completedPct}%`}
+              )
             </span>
           </p>
         </div>
@@ -208,7 +234,7 @@ export default function DashboardClient({
             </div>
           </div>
           <p className="text-gray-900 text-3xl font-bold">
-            {isLoading ? "..." : `${avgScore}/10`}
+            {isLoading ? "..." : sessions.length === 0 ? "0" : `${avgScore}/10`}
           </p>
         </div>
 
@@ -225,6 +251,8 @@ export default function DashboardClient({
           <p className="text-gray-900 text-3xl font-bold">
             {isLoading ? (
               "..."
+            ) : sessions.length === 0 ? (
+              "0"
             ) : (
               <>
                 {totalHours}h{" "}
@@ -293,7 +321,7 @@ export default function DashboardClient({
                     colSpan={6}
                     className="px-6 py-8 text-center text-sm text-gray-500"
                   >
-                    No pitch sessions found.
+                    - No Record -
                   </td>
                 </tr>
               ) : displayedSessions.length === 0 ? (
@@ -321,7 +349,31 @@ export default function DashboardClient({
                       {formatDuration(s.duration_seconds ?? s.duration ?? 0)}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                      {s.feedback || "-"}
+                      {/**
+                       * Show a friendly default when feedback is empty.
+                       * If feedback is structured, prefer a short label in table.
+                       */}
+                      {(() => {
+                        if (s.feedback == null)
+                          return "Click to view detailed feedback";
+                        if (typeof s.feedback === "object") {
+                          // If there's a short summary field, try to use it
+                          const summary =
+                            s.feedback?.summary ||
+                            s.feedback?.text ||
+                            s.feedback?.brief;
+                          if (summary) return summary;
+                          // If object is empty, show default label
+                          return Object.keys(s.feedback).length
+                            ? "Click to view detailed feedback"
+                            : "Click to view detailed feedback";
+                        }
+                        // string fallback
+                        const fb = (s.feedback || "").toString().trim();
+                        return fb.length
+                          ? fb
+                          : "Click to view detailed feedback";
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={getStatusBadgeClass(s.status ?? "")}>
@@ -329,7 +381,28 @@ export default function DashboardClient({
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {s.score != null ? `${s.score}/10` : "-"}
+                      {(() => {
+                        // Prefer structured overall_score -> divide by 10 and show 1 decimal
+                        try {
+                          if (
+                            s?.score &&
+                            typeof s.score === "object" &&
+                            s.score.overall_score != null
+                          ) {
+                            const n = Number(s.score.overall_score);
+                            if (!isNaN(n)) return `${(n / 10).toFixed(1)}/10`;
+                          }
+                          // Legacy numeric score handling: if >10 assume 0-100 scale
+                          if (typeof s.score === "number") {
+                            const num = s.score;
+                            if (num > 10) return `${(num / 10).toFixed(1)}/10`;
+                            return `${num.toFixed(1)}/10`;
+                          }
+                        } catch (e) {
+                          // fallthrough
+                        }
+                        return "-";
+                      })()}
                     </td>
                   </tr>
                 ))

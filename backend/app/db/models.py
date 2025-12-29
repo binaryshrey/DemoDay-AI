@@ -3,9 +3,9 @@ from datetime import datetime
 
 from sqlalchemy import (
     Column, String, Text, Integer, Boolean, Numeric,
-    DateTime, CheckConstraint
+    DateTime, CheckConstraint, text
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -40,9 +40,10 @@ class PitchSession(Base):
     gcp_bucket = Column(String, nullable=True)
     gcp_object_path = Column(Text, nullable=True)
 
-    feedback = Column(Text, nullable=False, default="")
+    # JSONB fields for structured feedback and scores
+    feedback = Column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
     review_required = Column(Boolean, nullable=False, default=False)
-    score = Column(Numeric(3, 1), nullable=False, default=0)
+    score = Column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
 
     status = Column(String, nullable=False, default="Pending")
 
