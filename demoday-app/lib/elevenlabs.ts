@@ -25,6 +25,11 @@ interface ElevenLabsMessage {
 }
 
 let audioChunkCount = 0;
+// A module-level pending message that will be injected once the conversation
+// has initialized. We expose a setter so callers can set or update the
+// initial agent message (tts_summary) before or after calling
+// connectElevenLabs.
+let pendingInitialMessage: string | undefined = undefined;
 
 export interface ElevenLabsCallbacks {
   onReady?: () => void;
@@ -71,9 +76,10 @@ export async function connectElevenLabs(
     `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId}`
   );
 
-  // Keep a pending message that will be injected once the conversation
-  // has emitted its initiation metadata (server-ready).
-  let pendingInitialMessage: string | undefined = initialAgentMessage;
+  // Use the module-level pending message. If an initial message was
+  // provided, set/override it here so it will be injected once the
+  // conversation is initialized.
+  pendingInitialMessage = initialAgentMessage;
 
   websocket.onopen = async () => {
     console.log("[11Labs] WebSocket connected");
@@ -182,6 +188,29 @@ export async function connectElevenLabs(
     console.error("[11Labs] WebSocket error:", error);
     callbacks.onError?.();
   };
+}
+
+/**
+ * Allow callers to set or update the initial agent message (e.g. tts_summary)
+ * at any time. If the conversation is already initialized, attempt an
+ * immediate injection. Otherwise it will be sent once the server emits the
+ * initiation metadata.
+ */
+export function setInitialAgentMessage(text?: string) {
+  pendingInitialMessage = text;
+  if (!text) return;
+
+  // If the socket is open and conversation already initialized, try to
+  // inject immediately so the agent can speak without waiting.
+  if (isInitialized && websocket && websocket.readyState === WebSocket.OPEN) {
+    try {
+      injectAgentMessage(text);
+      // clear pending since we've already injected
+      pendingInitialMessage = undefined;
+    } catch (err) {
+      console.error("[11Labs] Immediate injection failed:", err);
+    }
+  }
 }
 
 /**

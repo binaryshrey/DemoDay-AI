@@ -10,7 +10,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@anam-ai/js-sdk";
 import type AnamClient from "@anam-ai/js-sdk/dist/module/AnamClient";
-import { connectElevenLabs, stopElevenLabs } from "../../lib/elevenlabs";
+import {
+  connectElevenLabs,
+  stopElevenLabs,
+  setInitialAgentMessage,
+} from "../../lib/elevenlabs";
 import ProfileMenu from "./ProfileMenu";
 
 interface Config {
@@ -149,6 +153,16 @@ export default function FeedbackSessionClient({
             // Extract tts_summary and store for speaking later
             if (fbJson?.tts_summary) {
               ttsSummaryRef.current = fbJson.tts_summary;
+              // Make sure the elevenlabs lib knows about the initial message
+              // as soon as we have it (handles before/after connect cases).
+              try {
+                setInitialAgentMessage(fbJson.tts_summary);
+              } catch (err) {
+                console.warn(
+                  "[Feedback] Failed to set initial agent message:",
+                  err
+                );
+              }
             }
           }
         } catch (err) {
