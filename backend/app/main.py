@@ -30,4 +30,4 @@ app.include_router(feedback_router)
 
 @app.get("/health")
 def health():
-    return {"ok": True}
+    return {"alive": True}

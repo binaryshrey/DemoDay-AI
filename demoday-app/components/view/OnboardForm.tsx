@@ -361,6 +361,21 @@ export default function OnboardForm({ user }: OnboardFormProps) {
       const savedSession = await response.json();
       console.log("✅ Data saved successfully:", savedSession);
 
+      // Persist the created pitch session id to sessionStorage so later
+      // feedback components can reference the same session when calling
+      // the backend feedback endpoint.
+      try {
+        if (savedSession && savedSession.id) {
+          sessionStorage.setItem("pitch_session_id", String(savedSession.id));
+          console.log(
+            "Saved pitch_session_id to sessionStorage:",
+            savedSession.id
+          );
+        }
+      } catch (err) {
+        console.warn("Failed to save pitch_session_id to sessionStorage:", err);
+      }
+
       // Step 5: Move to permissions step
       setStep("permissions");
 

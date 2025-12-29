@@ -112,11 +112,26 @@ export default function FeedbackSessionClient({
             const qa_transcript = normalizeTranscript(rawMessages as RawMsg[]);
             const pitch_text = buildPitchTextUserOnly(qa_transcript);
 
-            const payload = {
+            const payload: any = {
               pitch_text,
               top_k: 6,
               qa_transcript,
             };
+
+            // Attach pitch session id (if present) so backend can persist
+            // the generated feedback against the correct DB row.
+            try {
+              const pitchId = sessionStorage.getItem("pitch_session_id");
+              if (pitchId) {
+                payload.pitch_id = pitchId;
+                console.log("Including pitch_id in feedback payload:", pitchId);
+              }
+            } catch (err) {
+              console.warn(
+                "Could not read pitch_session_id from sessionStorage:",
+                err
+              );
+            }
 
             // Resolve backend API base from env (client-safe NEXT_PUBLIC var)
             const apiBase = (
@@ -736,7 +751,7 @@ export default function FeedbackSessionClient({
             </>
           ) : isConnected ? (
             <>
-              <span>Go to Dashboard</span>
+              <span>Go to Review Feedback</span>
             </>
           ) : (
             <>
