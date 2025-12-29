@@ -395,8 +395,8 @@ export default function FeedbackSessionClient({
             </a>
             <ProfileMenu user={user} />
           </div>
-          <h1 className="text-white text-3xl font-semibold mt-2">
-            DemoDay Investor Feedback
+          <h1 className="text-white text-3xl font-semibold mt-4">
+            DemoDay AI Investor Pitch Feedback
           </h1>
         </nav>
       </div>
