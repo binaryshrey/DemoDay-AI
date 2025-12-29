@@ -100,30 +100,24 @@ export async function connectElevenLabs(
           audioFormat: meta?.agent_output_audio_format,
         });
         // If the caller provided an initial message (e.g., tts_summary),
-        // inject it now that the conversation is initialized.
+        // send it as a `user_message` so the agent treats it like user input
+        // and responds/speaks it. We include a guiding prefix so the agent
+        // reads the summary aloud rather than starting a dialog.
         if (pendingInitialMessage) {
           try {
-            // Use the same best-effort injection pathway.
-            const preferred = {
-              type: "synthesize_and_play",
-              text: pendingInitialMessage,
-            };
-            websocket?.send(JSON.stringify(preferred));
-            const fallback = {
-              type: "agent_response_injection",
-              agent_response: pendingInitialMessage,
-            };
-            websocket?.send(JSON.stringify(fallback));
+            const toSpeak = pendingInitialMessage;
+            pendingInitialMessage = undefined;
+            const userText = `Read the following feedback summary out loud, naturally, with short pauses. Do not ask questions. Just read it.\n\n${toSpeak}`;
+            injectAgentMessage(userText);
             console.log(
-              "[11Labs] Sent pending initial agent message (best-effort)"
+              "[11Labs] Sent pending initial user_message (best-effort)"
             );
           } catch (err) {
             console.error(
-              "[11Labs] Failed to send pending initial message:",
+              "[11Labs] Failed to send pending initial user_message:",
               err
             );
           }
-          pendingInitialMessage = undefined;
         }
         break;
       }
@@ -238,18 +232,12 @@ export function injectAgentMessage(text: string): boolean {
   }
 
   try {
-    // Preferred: ask server to synthesize and play text (some servers accept this)
-    const preferred = { type: "synthesize_and_play", text };
-    websocket.send(JSON.stringify(preferred));
-
-    // Fallback: send an agent_response-like object which some proxies may accept
-    const fallback = { type: "agent_response_injection", agent_response: text };
-    websocket.send(JSON.stringify(fallback));
-
-    console.log("[11Labs] Injected agent message (best-effort)");
+    // Correct event for ElevenLabs Agents platform: send text as a user message
+    websocket.send(JSON.stringify({ type: "user_message", text }));
+    console.log("[11Labs] Sent user_message to agent");
     return true;
   } catch (err) {
-    console.error("[11Labs] Failed to inject agent message:", err);
+    console.error("[11Labs] Failed to send user_message:", err);
     return false;
   }
 }
