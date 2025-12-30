@@ -30,9 +30,17 @@ interface FeedbackData {
 export function FeedbackDashboard({
   data,
   startupName,
+  pitchId,
+  reviewStatus,
+  onMarkReviewCompleted,
+  markingReview,
 }: {
   data: FeedbackData;
   startupName?: string;
+  pitchId?: string | null;
+  reviewStatus?: string | null;
+  onMarkReviewCompleted?: () => Promise<void> | void;
+  markingReview?: boolean;
 }) {
   const getScoreColor = (score: number) => {
     if (score >= 7) return "text-emerald-500";
@@ -57,11 +65,34 @@ export function FeedbackDashboard({
       <div className="px-4 pb-6">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-lg font-bold mb-2 text-balance">
-            {startupName
-              ? `${startupName} Pitch Analysis`
-              : "Pitch Analysis Feedback"}
-          </h1>
+          <div className="flex items-center gap-3 ">
+            <h1 className="text-lg font-bold mb-2 text-balance">
+              {startupName
+                ? `${startupName} Pitch Analysis`
+                : "Pitch Analysis Feedback"}
+            </h1>
+
+            {/* Status chip */}
+            {reviewStatus ? (
+              <button
+                onClick={onMarkReviewCompleted}
+                disabled={Boolean(markingReview)}
+                className={`ml-2 rounded-full px-3 -mt-1.5 text-xs font-semibold cursor-pointer disabled:cursor-not-allowed transition-all disabled:opacity-60 focus:outline-none border ${
+                  reviewStatus.toLowerCase().includes("completed")
+                    ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                    : "border-amber-200 bg-amber-100 text-amber-700"
+                }`}
+                title={
+                  markingReview
+                    ? "Updating..."
+                    : `Mark review completed for pitch ${pitchId ?? ""}`
+                }
+              >
+                {markingReview ? "Updating…" : reviewStatus}
+              </button>
+            ) : null}
+          </div>
+
           <p className="text-sm text-gray-600">
             Pitch analysis powered by Google Gemini with RAG-grounded investor
             insights
@@ -190,7 +221,7 @@ export function FeedbackDashboard({
             <ul className="space-y-1">
               {data.top_strengths.map((strength, idx) => (
                 <li key={idx} className="flex gap-2 text-sm leading-relaxed">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-1 shrink-0" />
                   <span>{strength}</span>
                 </li>
               ))}
@@ -208,7 +239,7 @@ export function FeedbackDashboard({
             <ul className="space-y-1">
               {data.top_risks.map((risk, idx) => (
                 <li key={idx} className="flex gap-2 text-sm leading-relaxed">
-                  <AlertCircle className="w-4 h-4 text-rose-500 mt-1 flex-shrink-0" />
+                  <AlertCircle className="w-4 h-4 text-rose-500 mt-1 shrink-0" />
                   <span>{risk}</span>
                 </li>
               ))}
@@ -285,6 +316,9 @@ export default function ReviewFeedbackClient({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [startupName, setStartupName] = useState<string | null>(null);
+  const [pitchId, setPitchId] = useState<string | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<string | null>(null);
+  const [markingReview, setMarkingReview] = useState<boolean>(false);
 
   useEffect(() => {
     // Priority order:
@@ -362,6 +396,18 @@ export default function ReviewFeedbackClient({
         const apiStartupName = json.startup_name ?? json.startupName ?? null;
         setStartupName(apiStartupName);
 
+        // capture review status from API if provided
+        const apiStatus =
+          json.review_status ??
+          json.reviewStatus ??
+          json.status ??
+          fb.review_status ??
+          fb.status ??
+          null;
+        if (apiStatus) setReviewStatus(String(apiStatus));
+
+        // store resolved pitch id for later actions
+        setPitchId(String(pitchId));
         setData(mapped);
       } catch (err: any) {
         if (err.name === "AbortError") return;
@@ -374,6 +420,54 @@ export default function ReviewFeedbackClient({
 
     return () => abortController.abort();
   }, [params, searchParams]);
+
+  // Handler for marking review as completed
+  const markReviewCompleted = async () => {
+    if (!pitchId) {
+      setError("No pitch id available to mark review completed.");
+      return;
+    }
+
+    const apiBase = (
+      process.env.NEXT_PUBLIC_DEMODAY_API_URI ||
+      (process.env.DEMODAY_API_URI as string) ||
+      ""
+    ).replace(/\/$/, "");
+
+    if (!apiBase) {
+      setError("API base URL not configured (NEXT_PUBLIC_DEMODAY_API_URI).");
+      return;
+    }
+
+    try {
+      setMarkingReview(true);
+      setError(null);
+      const res = await fetch(
+        `${apiBase}/pitch/${encodeURIComponent(
+          String(pitchId)
+        )}/review-completed`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => res.statusText);
+        throw new Error(
+          `Failed to mark review completed: ${res.status} ${text}`
+        );
+      }
+
+      // update UI status
+      setReviewStatus("Review Completed");
+    } catch (err: any) {
+      console.error("[ReviewFeedbackClient] markReviewCompleted error:", err);
+      setError(err?.message ?? "Failed to mark review completed");
+    } finally {
+      setMarkingReview(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-6">Loading feedback…</div>;
@@ -388,6 +482,13 @@ export default function ReviewFeedbackClient({
   }
 
   return (
-    <FeedbackDashboard data={data} startupName={startupName ?? undefined} />
+    <FeedbackDashboard
+      data={data}
+      startupName={startupName ?? undefined}
+      pitchId={pitchId}
+      reviewStatus={reviewStatus}
+      onMarkReviewCompleted={markReviewCompleted}
+      markingReview={markingReview}
+    />
   );
 }
