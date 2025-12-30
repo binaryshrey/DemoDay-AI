@@ -509,8 +509,8 @@ export default function FeedbackSessionClient({
       style={{ backgroundColor: "#000" }}
     >
       {/* Navigation Header */}
-      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
-        <nav className="flex flex-col items-center gap-4">
+      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-4 lg:px-8">
+        <nav className="flex flex-col items-center gap-2">
           <div className="w-full flex items-center justify-between">
             <a href="/dashboard" className="-m-1.5 p-1.5">
               <img
@@ -521,7 +521,7 @@ export default function FeedbackSessionClient({
             </a>
             <ProfileMenu user={user} />
           </div>
-          <h1 className="text-white text-3xl font-semibold mt-4">
+          <h1 className="text-white text-3xl font-medium">
             DemoDay AI Investor Pitch Feedback
           </h1>
         </nav>
