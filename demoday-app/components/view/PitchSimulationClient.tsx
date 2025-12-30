@@ -426,14 +426,22 @@ export default function PitchSimulationClient({
     }
   };
 
+  // Derive a friendly user name for greetings
+  const userName =
+    user && user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : user && user.email
+      ? String(user.email).split("@")[0]
+      : "there";
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center"
       style={{ backgroundColor: "#000" }}
     >
       {/* Navigation Header */}
-      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-6 lg:px-8">
-        <nav className="flex flex-col items-center gap-4">
+      <div className="absolute top-0 left-0 right-0 z-50 px-6 pt-4 lg:px-8">
+        <nav className="flex flex-col items-center gap-2">
           <div className="w-full flex items-center justify-between">
             <a href="/dashboard" className="-m-1.5 p-1.5">
               <img
@@ -444,43 +452,50 @@ export default function PitchSimulationClient({
             </a>
             <ProfileMenu user={user} />
           </div>
-          <h1 className="text-white text-3xl font-semibold mt-4">
+          <h1 className="text-white text-3xl font-medium">
             DemoDay AI Investor Pitch Simulation
           </h1>
+
+          {/* Greeting + inline countdown (moves timer next to the text) */}
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-white/80 text-sm ">
+              Hello, {userName}! Your startup pitch ends in
+            </p>
+
+            {/* Inline countdown block (same styling as previous top-right card) */}
+            {isConnected && !isInitializing && (
+              <div className="z-40">
+                <div
+                  className="bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl px-4 py-2 shadow-2xl"
+                  style={{
+                    boxShadow:
+                      "0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg
+                      className="w-5 h-5 text-white/80"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div className="text-sm text-white">
+                      {formatTime(timeRemaining)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
       </div>
-
-      {/* Countdown Timer - Top Right (below menu) */}
-      {isConnected && !isInitializing && (
-        <div className="absolute top-20 right-6 z-40">
-          <div
-            className="bg-white/5 backdrop-blur-2xl border border-white/30 rounded-xl px-6 py-3 shadow-2xl"
-            style={{
-              boxShadow:
-                "0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <svg
-                className="w-5 h-5 text-white/80"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <div className="text-sm text-white">
-                {formatTime(timeRemaining)}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Ending Loader - Blocks UI */}
       {isEnding && (
@@ -637,13 +652,15 @@ export default function PitchSimulationClient({
         <button
           onClick={handleToggle}
           disabled={isLoading}
-          className="px-10 py-3 rounded-full font-semibold text-white shadow-2xl transition-all transform  flex items-center gap-3 cursor-pointer disabled:bg-gray-600 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className={`px-10 py-3 rounded-full font-semibold ${
+            isLoading ? "text-white" : "text-white"
+          } shadow-2xl transition-all transform  flex items-center gap-3 cursor-pointer disabled:bg-gray-600 disabled:cursor-not-allowed disabled:hover:scale-100`}
           style={{
-            backgroundColor: isLoading ? "#4b5563" : "#fc7249",
+            backgroundColor: isLoading ? "#fc7249" : "#fc7249",
           }}
           onMouseEnter={(e) => {
             if (!isLoading) {
-              e.currentTarget.style.backgroundColor = "#ff4000";
+              e.currentTarget.style.backgroundColor = "#fc7249";
             }
           }}
           onMouseLeave={(e) => {

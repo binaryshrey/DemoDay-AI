@@ -181,7 +181,7 @@ export default function SettingsClient() {
                 <AlertDialogTrigger asChild>
                   <button
                     type="button"
-                    className="px-4 py-2 bg-[#fc7249] text-white text-sm font-medium rounded-md hover:bg-[#fc7249] focus:outline-none focus:ring-2 focus:ring-[#fc7249] focus:ring-offset-2 cursor-pointer"
+                    className="px-3 py-1.5 text-xs font-medium bg-[#fc7249] text-white rounded-md hover:bg-[#fc7249] focus:outline-none focus:ring-2 focus:ring-[#fc7249] focus:ring-offset-2 cursor-pointer md:px-4 md:py-2 md:text-sm"
                   >
                     Delete Account
                   </button>

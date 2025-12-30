@@ -25,7 +25,7 @@ export default async function Onboard() {
 
       <div className="mx-auto max-w-6xl px-6 py-8 lg:px-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-5xl">
             DemoDay Investor Pitch Setup
           </h1>
           <p className="mt-2 text-md leading-4 text-gray-600">

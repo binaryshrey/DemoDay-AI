@@ -414,7 +414,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
     return (
       <div className="mt-8 space-y-6">
         {/* Permission Setup Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 shadow-sm">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900">
               Setup Your Devices
@@ -488,7 +488,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                   onClick={requestMicrophonePermission}
                   variant="outline"
                   size="sm"
-                  className="mt-4"
+                  className="mt-4 py-3 sm:py-2"
                 >
                   Try Again
                 </Button>
@@ -542,7 +542,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                     autoPlay
                     playsInline
                     muted
-                    className="w-full aspect-video bg-gray-900 rounded-lg"
+                    className="w-full aspect-video bg-gray-900 rounded-lg max-h-48 object-cover"
                     style={{ transform: "scaleX(-1)" }}
                   />
                   <p className="text-xs text-gray-500 mt-2">Camera preview</p>
@@ -554,7 +554,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                   onClick={requestCameraPermission}
                   variant="outline"
                   size="sm"
-                  className="mt-4"
+                  className="mt-4 py-3 sm:py-2"
                 >
                   Try Again
                 </Button>
@@ -563,7 +563,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <Button
               onClick={() => {
                 cleanupStreams();
@@ -573,7 +573,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
               }}
               variant="outline"
               size="lg"
-              className="flex-1 cursor-pointer"
+              className="flex-1 cursor-pointer py-2 sm:py-3"
             >
               Back to Form
             </Button>
@@ -581,7 +581,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
               onClick={handleStartPitch}
               disabled={!allPermissionsGranted || isLoading}
               size="lg"
-              className="flex-1 bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
+              className="flex-1 bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer py-2 sm:py-3"
             >
               {isLoading && <Loader2 className="h-5 w-5 animate-spin mr-2" />}
               {isLoading ? "Launching..." : "Start Pitch Simulation"}
@@ -609,21 +609,23 @@ export default function OnboardForm({ user }: OnboardFormProps) {
       )}
 
       {/* First Input Group - Configuration with Selects */}
-      <div className="bg-white rounded-lg border border-gray-200 p-8 shadow-sm">
-        <div className="flex items-center justify-between gap-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900">
               Configuration
             </h3>
-            <p className="text-sm text-gray-500 mt-1">Configure your setup</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Configure your pitch setup
+            </p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Duration
               </label>
               <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger className="w-45 cursor-pointer">
+                <SelectTrigger className="w-full sm:w-44 cursor-pointer">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
                 <SelectContent>
@@ -644,7 +646,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                   setFormData((prev) => ({ ...prev, language: value }))
                 }
               >
-                <SelectTrigger className="w-45 cursor-pointer">
+                <SelectTrigger className="w-full sm:w-44 cursor-pointer">
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
@@ -664,7 +666,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                   setFormData((prev) => ({ ...prev, tone: value }))
                 }
               >
-                <SelectTrigger className="w-45 cursor-pointer">
+                <SelectTrigger className="w-full sm:w-44 cursor-pointer">
                   <SelectValue placeholder="Select tone" />
                 </SelectTrigger>
                 <SelectContent>
@@ -706,7 +708,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label
                 htmlFor="website"
@@ -795,7 +797,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 disabled={uploadProgress.uploading}
               />
-              <div className="w-full h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 transition-colors">
+              <div className="w-full h-24 sm:h-32 border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 transition-colors">
                 {uploadProgress.uploading ? (
                   <>
                     <Loader2 className="w-8 h-8 text-[#fc7249] animate-spin" />
@@ -898,7 +900,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
         onClick={handleContinueToPermissions}
         disabled={isLoading}
         size="lg"
-        className="w-full px-8 py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
+        className="w-full px-6 py-4 sm:px-8 sm:py-6 text-base bg-[#fc7249] hover:bg-[#fc7249]/90 text-black font-semibold cursor-pointer"
       >
         {isLoading ? (
           <>

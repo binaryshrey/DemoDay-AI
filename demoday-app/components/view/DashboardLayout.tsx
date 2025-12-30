@@ -119,7 +119,7 @@ export default function DashboardLayout({
                       </button>
                     </div>
                   </Transition.Child>
-                  <div className="h-0 flex-1 overflow-y-auto pt-5 pb-4">
+                  <div className="h-0 flex-1 overflow-y-auto pt-4 pb-4">
                     <div className="flex shrink-0 items-center px-4">
                       <Image
                         className="h-8 w-auto"
@@ -128,9 +128,9 @@ export default function DashboardLayout({
                         width={32}
                         height={32}
                       />
-                      {/* <p className="text-xl pl-4 font-semibold text-gray-900">
+                      <p className="text-xl pl-4 font-semibold text-gray-900">
                         DemoDay AI
-                      </p> */}
+                      </p>
                     </div>
                     <nav className="mt-5 space-y-1 px-2">
                       {navigation.map((item) =>
@@ -225,7 +225,7 @@ export default function DashboardLayout({
         <div className="hidden md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col">
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
-            <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+            <div className="flex flex-1 flex-col overflow-y-auto pt-4 pb-4">
               <div className="flex shrink-0 items-center px-4">
                 <Image
                   className="h-8 w-auto"
@@ -234,9 +234,9 @@ export default function DashboardLayout({
                   width={32}
                   height={32}
                 />
-                {/* <p className="text-xl pl-4 font-semibold text-gray-900">
+                <p className="text-xl pl-4 font-semibold text-gray-900">
                   DemoDay AI
-                </p> */}
+                </p>
               </div>
               <nav className="mt-5 flex-1 space-y-1 px-2">
                 {navigation.map((item) =>
