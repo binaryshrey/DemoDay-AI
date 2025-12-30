@@ -90,3 +90,33 @@ def pitch_feedback(req: FeedbackReq, db: Session = Depends(get_db)):
 
     # return the generated feedback to the caller (frontend expects tts_summary etc.)
     return fb
+
+
+@router.post("/{pitch_id}/review-completed")
+def mark_review_completed(pitch_id: str, db: Session = Depends(get_db)):
+    # Validate UUID format
+    try:
+        import uuid
+
+        pid = uuid.UUID(pitch_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid pitch_id format; must be a UUID")
+
+    row = db.query(PitchSession).filter(PitchSession.id == pid).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Pitch session not found")
+
+    try:
+        # store the explicit 'Review Completed' status to match Pydantic schema
+        row.status = "Review Completed"
+        row.review_required = False
+        row.updated_at = datetime.utcnow()
+
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update pitch session: {e}")
+
+    return {"id": str(row.id), "status": row.status}

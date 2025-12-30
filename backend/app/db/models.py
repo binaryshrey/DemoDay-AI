@@ -14,7 +14,7 @@ class PitchSession(Base):
     __tablename__ = "pitch_sessions"
     __table_args__ = (
         CheckConstraint(
-            "status in ('Pending', 'Completed', 'Review Needed')",
+            "status in ('Pending', 'Review Needed', 'Review Completed')",
             name="pitch_sessions_status_check",
         ),
         {"schema": "public"},
