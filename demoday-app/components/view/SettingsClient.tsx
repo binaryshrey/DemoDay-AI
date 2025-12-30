@@ -1,16 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RiFilePaper2Line } from "@remixicon/react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
+import { handleSignOut } from "../../app/actions/auth";
 
 export default function SettingsClient() {
-  const [saveRecordings, setSaveRecordings] = useState(true);
-  const [shareAnalytics, setShareAnalytics] = useState(true);
+  // default both toggles to OFF per request
+  const [saveRecordings, setSaveRecordings] = useState(false);
+  const [shareAnalytics, setShareAnalytics] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const signOutFormRef = useRef<HTMLFormElement | null>(null);
+
+  const { user, loading: authLoading } = useAuth({ ensureSignedIn: false });
 
   return (
     <div className="mx-4">
       <h1 className="text-xl font-semibold text-gray-900">Settings</h1>
-      <p className="mt-2 text-gray-600">
+      <p className="text-sm mt-2 text-gray-600">
         Manage your account settings and preferences
       </p>
 
@@ -22,7 +42,12 @@ export default function SettingsClient() {
           </h2>
           <div className="space-y-1">
             {/* Data privacy terms */}
-            <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+            <a
+              href="https://github.com/binaryshrey/DemoDay-AI/blob/main/PRIVACY_POLICY.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <RiFilePaper2Line className="w-5 h-5 text-gray-700" />
                 <div className="text-left">
@@ -44,10 +69,15 @@ export default function SettingsClient() {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-            </button>
+            </a>
 
             {/* Terms and conditions */}
-            <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+            <a
+              href="https://github.com/binaryshrey/DemoDay-AI/blob/main/TERMS_OF_SERVICE.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <RiFilePaper2Line className="w-5 h-5 text-gray-700" />
                 <div className="text-left">
@@ -69,7 +99,7 @@ export default function SettingsClient() {
                   d="M9 5l7 7-7 7"
                 />
               </svg>
-            </button>
+            </a>
           </div>
         </div>
 
@@ -147,12 +177,120 @@ export default function SettingsClient() {
                   Permanently delete your account and all associated data
                 </p>
               </div>
-              <button
-                type="button"
-                className="px-4 py-2 bg-[#fc7249] text-white text-sm font-medium rounded-md hover:bg-[#e86239] focus:outline-none focus:ring-2 focus:ring-[#fc7249] focus:ring-offset-2 cursor-pointer"
-              >
-                Delete Account
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-[#fc7249] text-white text-sm font-medium rounded-md hover:bg-[#fc7249] focus:outline-none focus:ring-2 focus:ring-[#fc7249] focus:ring-offset-2 cursor-pointer"
+                  >
+                    Delete Account
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete
+                      your account and remove your data from our servers.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleting}>
+                      Cancel
+                    </AlertDialogCancel>
+
+                    {/* Hidden form used to invoke server action that signs the user out */}
+                    <form
+                      ref={signOutFormRef}
+                      action={handleSignOut}
+                      style={{ display: "none" }}
+                    />
+
+                    {/* Use a plain button (not AlertDialogAction) so the dialog does NOT auto-close
+                        — we will only sign the user out / navigate away after the delete succeeds. */}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // prevent double click
+                        if (deleting) return;
+                        setDeleting(true);
+
+                        try {
+                          // Resolve backend API base from env (client-safe NEXT_PUBLIC var)
+                          const apiBase = (
+                            process.env.NEXT_PUBLIC_DEMODAY_API_URI ||
+                            (process.env.DEMODAY_API_URI as string) ||
+                            ""
+                          ).replace(/\/$/, "");
+
+                          if (!apiBase) {
+                            throw new Error(
+                              "DEMODAY API URL not configured. Please set NEXT_PUBLIC_DEMODAY_API_URI"
+                            );
+                          }
+
+                          const userId = user?.id ?? user?.email;
+                          if (!userId) {
+                            throw new Error(
+                              "No user id available for deletion"
+                            );
+                          }
+
+                          const res = await fetch(
+                            `${apiBase}/users/${encodeURIComponent(
+                              userId
+                            )}/data`,
+                            { method: "DELETE" }
+                          );
+
+                          if (!res.ok) {
+                            const txt = await res
+                              .text()
+                              .catch(() => res.statusText);
+                            throw new Error(
+                              `Delete failed: ${res.status} ${txt}`
+                            );
+                          }
+
+                          // On success, submit the hidden server-action form to sign the user out
+                          // This triggers the same server-side signOut flow used elsewhere in the app.
+                          if (signOutFormRef.current) {
+                            // requestSubmit will trigger the server action form
+                            // and perform the sign out on the server
+                            // @ts-ignore - requestSubmit exists on modern browsers
+                            signOutFormRef.current.requestSubmit();
+                          } else {
+                            // as a fallback, redirect to homepage
+                            window.location.href = "/";
+                          }
+                        } catch (err) {
+                          console.error("Failed to delete user data:", err);
+                          // Optionally surface to user
+                          alert(
+                            err instanceof Error
+                              ? err.message
+                              : "Failed to delete account data"
+                          );
+                          setDeleting(false);
+                        }
+                      }}
+                      disabled={deleting || authLoading}
+                      className="px-4 py-2 bg-[#fc7249] text-white text-sm font-medium rounded-md hover:bg-[#fc7249] focus:outline-none focus:ring-2 focus:ring-[#fc7249] focus:ring-offset-2"
+                    >
+                      {deleting ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Processing...
+                        </span>
+                      ) : (
+                        "Continue"
+                      )}
+                    </button>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </div>
