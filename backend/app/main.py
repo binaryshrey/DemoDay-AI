@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.routes.pitch_sessions import router as pitch_sessions_router
+from app.routes.pitch_sessions import pitch_router as pitch_router
 from app.routes.rag import router as rag_router
 from app.routes.feedback import router as feedback_router
 
@@ -25,6 +26,7 @@ app.add_middleware(
 )
 
 app.include_router(pitch_sessions_router)
+app.include_router(pitch_router)
 app.include_router(rag_router)
 app.include_router(feedback_router)
 

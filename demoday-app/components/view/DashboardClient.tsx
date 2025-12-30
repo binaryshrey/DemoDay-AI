@@ -85,6 +85,21 @@ export default function DashboardClient({
     fetchSessions();
   }, [userId]);
 
+  const handleRowClick = (session: any) => {
+    try {
+      const id =
+        session?.id ?? session?.session_id ?? session?.pitch_session_id;
+      if (!id) {
+        console.warn("[Dashboard] clicked session has no id");
+        return;
+      }
+      // Navigate to review-feedback using the pitch id
+      router.push(`/review-feedback/${encodeURIComponent(String(id))}`);
+    } catch (err) {
+      console.error("[Dashboard] Failed to navigate to review-feedback:", err);
+    }
+  };
+
   const handleNewPitchClick = () => {
     router.push("/onboard");
   };
@@ -338,6 +353,7 @@ export default function DashboardClient({
                   <tr
                     key={s.id || idx}
                     className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleRowClick(s)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {idx + 1}

@@ -10,6 +10,9 @@ from app.schemas.pitch_sessions import PitchSessionCreate, PitchSessionUpdate, P
 
 router = APIRouter(prefix="/pitch-sessions", tags=["pitch-sessions"])
 
+# Additional router exposing a singular, user-friendly path for fetching a pitch
+pitch_router = APIRouter(prefix="/pitch", tags=["pitch"]) 
+
 def _to_out(row: PitchSession) -> PitchSessionOut:
     return PitchSessionOut(
         id=str(row.id),
@@ -119,3 +122,19 @@ def update_pitch_session(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"DB update failed: {e}")
+
+
+@pitch_router.get("/{pitch_session_id}", response_model=PitchSessionOut)
+def get_pitch_session(
+    pitch_session_id: str,
+    db: Session = Depends(get_db),
+):
+    """Fetch a single pitch session by its id.
+
+    Returns 404 if not found.
+    """
+    row = db.query(PitchSession).filter(PitchSession.id == pitch_session_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Pitch session not found")
+
+    return _to_out(row)
