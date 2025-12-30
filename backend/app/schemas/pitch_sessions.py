@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, Literal, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
 
-StatusType = Literal["Pending", "Completed", "Review Needed"]
+StatusType = Literal["Pending", "Review Completed", "Review Needed"]
 
 class PitchSessionCreate(BaseModel):
     user_id: str

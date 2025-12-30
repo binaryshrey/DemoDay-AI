@@ -77,6 +77,7 @@ def pitch_feedback(req: FeedbackReq, db: Session = Depends(get_db)):
 
             row.score = score_val
             row.feedback = feedback_val
+            row.status = "Review Needed"
             row.updated_at = datetime.utcnow()
 
             db.add(row)
