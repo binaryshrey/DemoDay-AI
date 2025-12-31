@@ -254,17 +254,18 @@ No scheduling, no bias, no waiting.
 
 ## API Overview (high-level)
 
-### `POST /rag/retrieve`
+#### `POST /rag/retrieve`
 
-**Use when:** you need YC context snippets for a query.  
-**Returns:** top-K relevant transcript chunks with timestamps and sources.
+Use when: you need YC context snippets for a query.  
+Returns: top-K relevant transcript chunks with timestamps and sources.
 
-### `POST /pitch/feedback`
+#### `POST /pitch/feedback`
 
-**Use when:** you want a full VC-style evaluation of a pitch.  
-**Internally calls** `/rag/retrieve` to ground feedback.  
-**Returns:** structured scores + strengths/risks + rewrite + `tts_summary` + citations.
+Use when: you want a full VC-style evaluation of a pitch.  
+Internally calls `/rag/retrieve` to ground feedback.  
+Returns: structured scores + strengths/risks + rewrite + `tts_summary` + citations.
 
+![API Docs](https://raw.githubusercontent.com/binaryshrey/DemoDay-AI/refs/heads/main/demoday-app/assets/apidocs.png)
 
 
 ## Assets
@@ -272,8 +273,8 @@ No scheduling, no bias, no waiting.
 UI components, icons, and branding assets are located at:
 `https://github.com/binaryshrey/DemoDay-AI/tree/main/demoday-app/assets`
 
-Color Palatte
-![ColorPalatte](https://raw.githubusercontent.com/binaryshrey/DemoDay-AI/refs/heads/main/demoday-app/assets/color_palatte.png)
+
+![ColorPalatte](https://raw.githubusercontent.com/binaryshrey/DemoDay-AI/refs/heads/main/demoday-app/assets/color_pallete.png)
 
 
 ## Development Setup
@@ -310,16 +311,11 @@ WORKOS_COOKIE_PASSWORD=XXXXX-XXXXX
 
 NEXT_PUBLIC_WORKOS_REDIRECT_URI=XXXXX-XXXXX
 
-
 ANAM_INVESTOR_API_KEY=XXXXX-XXXXX
 ANAM_INVESTOR_AVATAR_ID=XXXXX-XXXXX
 ELEVENLABS_INVESTOR_AGENT_ID=XXXXX-XXXXX
 
 ANAM_AUTH_URI=XXXXX-XXXXX
-
-#NEXT_PUBLIC_DEMODAY_API_URI=XXXXX-XXXXX
-NEXT_PUBLIC_DEMODAY_API_URI=XXXXX-XXXXX
-DEMODAY_API_URI=XXXXX-XXXXX
 
 GCP_PROJECT_ID=XXXXX-XXXXX
 GCS_BUCKET_NAME=XXXXX-XXXXX
