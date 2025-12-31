@@ -106,7 +106,7 @@ export default function DashboardClient({
 
   // Computed metrics derived from fetched sessions
   const completedCount = sessions.filter(
-    (s) => (s.status ?? "") === "Completed"
+    (s) => (s.status ?? "") === "Completed Review"
   ).length;
   const completedPct = sessions.length
     ? ((completedCount / sessions.length) * 100).toFixed(2)
