@@ -1,4 +1,6 @@
 import Features from "@/components/view/feat/Features";
+import CTA from "@/components/view/CTA";
+import Footer from "@/components/view/Footer";
 import HeroSection from "../components/view/HeroSection";
 import {
   withAuth,
@@ -15,6 +17,8 @@ export default async function Home() {
     <div>
       <HeroSection user={user} signInUrl={signInUrl} signUpUrl={signUpUrl} />
       <Features />
+      <CTA />
+      <Footer />
     </div>
   );
 }
