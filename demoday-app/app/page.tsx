@@ -1,3 +1,4 @@
+import Features from "@/components/view/feat/Features";
 import HeroSection from "../components/view/HeroSection";
 import {
   withAuth,
@@ -13,6 +14,7 @@ export default async function Home() {
   return (
     <div>
       <HeroSection user={user} signInUrl={signInUrl} signUpUrl={signUpUrl} />
+      <Features />
     </div>
   );
 }
