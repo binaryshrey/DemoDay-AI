@@ -16,7 +16,7 @@ import Lenis from "@studio-freight/lenis";
 // Features mapped from the Onboard form inputs with colors
 const features = [
   {
-    name: "ONBOARD",
+    name: "1. ONBOARD",
     description: "Set up your pitch workspace",
     details: [
       {
@@ -41,7 +41,7 @@ const features = [
     image: "/setup.webp",
   },
   {
-    name: "PITCH",
+    name: "2. PITCH",
     description: "Simulate a real-world investor conversation",
     details: [
       {
@@ -66,7 +66,7 @@ const features = [
     image: "/banner.webp",
   },
   {
-    name: "FEEDBACK",
+    name: "3. FEEDBACK",
     description: "Understand how your pitch lands with investors",
     details: [
       {
@@ -91,7 +91,7 @@ const features = [
     image: "/feedback.webp",
   },
   {
-    name: "IMPROVE",
+    name: "4. IMPROVE",
     description: "Turn insights into measurable progress",
     details: [
       {

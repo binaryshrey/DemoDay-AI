@@ -6,19 +6,17 @@ const CTA = ({ signInUrl }: { signInUrl: string }) => {
   return (
     <div className="bg-white pt-20">
       <div className="relative isolate px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+        <div className="mx-auto max-w-2xl py-48 sm:py-48 lg:py-56">
           <div className="text-center">
-            <h4 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            <h4 className="text-md font-bold  text-gray-900 sm:text-3xl">
               Practice your pitch like it’s demo day.
             </h4>
-            <h4 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Get investor-ready with DemoDay AI.
+            <h4 className="text-md font-bold  text-gray-900 sm:text-3xl">
+              Powered by voice agents and investor grade AI.
             </h4>
-            <p className="mt-6 text-md leading-8 text-gray-600">
-              Run voice-first pitch simulations, answer real investor questions
-              and
-              <br />
-              get actionable feedback powered by Gemini and ElevenLabs.
+            <p className="mt-6 text-xs leading-5 text-gray-600">
+              Run pitch simulations, answer real investor questions and get
+              actionable feedback powered by Gemini and ElevenLabs.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link

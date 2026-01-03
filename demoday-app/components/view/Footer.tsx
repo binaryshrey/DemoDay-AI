@@ -10,6 +10,7 @@ import {
   GITHUB_URI,
   LINKEDIN_URI,
   BETTERSTACK_URI,
+  DEMODAY_AI_URI,
 } from "../../utils/Constants";
 
 const Footer = () => {
@@ -59,7 +60,7 @@ const Footer = () => {
             <GitHubLogoIcon className="w-6 h-6" />
           </Link>
           <Link
-            href={BETTERSTACK_URI}
+            href={DEMODAY_AI_URI}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/70 hover:text-white transition-colors"

@@ -45,7 +45,7 @@ const Card = ({
   return (
     <div
       ref={container}
-      className="h-screen flex items-center justify-center sticky top-0 px-6 lg:px-12"
+      className="h-screen flex items-center justify-center sticky top-0 px-4 lg:px-6"
     >
       <motion.div
         style={{
@@ -53,7 +53,7 @@ const Card = ({
           scale,
           top: `calc(-5vh + ${i * 25}px)`,
         }}
-        className="relative flex w-full h-164 rounded-3xl p-12 lg:p-16 origin-top gap-12"
+        className="relative flex w-full h-172 rounded-3xl p-8 lg:p-12 origin-top gap-12"
       >
         {/* Left side - Text content */}
         <div className="w-full lg:w-[40%] flex flex-col justify-center gap-6">
@@ -88,7 +88,7 @@ const Card = ({
         {/* Right side - Image */}
         <div className="hidden lg:block w-[60%] relative rounded-3xl overflow-hidden">
           <div className="w-full h-full relative">
-            <Image src={image} alt={name} fill className="object-fill" />
+            <Image src={image} alt={name} fill className="object-contain" />
           </div>
         </div>
       </motion.div>

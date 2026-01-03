@@ -43,28 +43,23 @@ export default async function ProfilePage() {
               Account Details
             </h2>
             <div className="space-y-3">
+              <div className="flex justify-between items-center py-3  border-b border-gray-200">
+                <span className="text-sm text-gray-600"> Name</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {user.firstName || "N/A"} {user.lastName || "N/A"}
+                </span>
+              </div>
               <div className="flex justify-between items-center py-3 border-b border-gray-200">
                 <span className="text-sm text-gray-600">Email</span>
                 <span className="text-sm font-medium text-gray-900">
                   {user.email}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-200">
-                <span className="text-sm text-gray-600">User ID</span>
-                <span className="text-xs font-medium text-gray-900 font-mono">
-                  {user.id}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-200">
+
+              <div className="flex justify-between items-center py-3">
                 <span className="text-sm text-gray-600">Email Verified</span>
                 <span className="text-sm font-medium text-gray-900">
                   {user.emailVerified ? "Yes" : "No"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-3">
-                <span className="text-sm text-gray-600">First Name</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {user.firstName || "N/A"}
                 </span>
               </div>
             </div>

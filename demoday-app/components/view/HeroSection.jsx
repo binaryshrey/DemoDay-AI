@@ -33,7 +33,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
 
   return (
     <div className="isolate bg-gradient-to-b from-[#ffe4d9] to-[#ffab91]">
-      <div className="absolute inset-0 -z-10 h-full w-full [background:radial-gradient(120%_120%_at_50%_10%,rgba(255,255,255,0.5)_20%,rgba(255,171,145,0.3)_100%)]"></div>
+      <div className="absolute inset-0 -z-10 h-90 lg:h-full  w-full [background:radial-gradient(120%_120%_at_50%_10%,rgba(255,255,255,0.5)_20%,rgba(255,171,145,0.3)_100%)]"></div>
       <div className="absolute h-1/2 -z-10 w-full bg-[radial-gradient(#e5e7eb_1px,transparent_2px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_100%,transparent_100%)]"></div>
       <div className="px-6 pt-6">
         <nav className="flex items-center justify-between" aria-label="Global">
@@ -121,7 +121,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
           >
             <div className="flex items-center justify-between">
               <a href="#" className="-m-1.5 p-1.5">
-                <img className="h-8" src="/demoday.svg" alt="" />
+                <img className="h-8" src="/logo-dark.svg" alt="" />
               </a>
               <h4 className="ml-2 text-gray-900 sm:text-2xl">DemoDay AI</h4>
               <button
@@ -203,11 +203,11 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
                 </span>
               </h1>
 
-              <p className="mt-6 text-sm sm:text-lg leading-6 sm:leading-8 text-gray-700 px-4 sm:px-0">
-                Sharpen your pitch with real-time AI voice feedback trained on{" "}
-                <br className="hidden sm:block" />
-                <strong>YCombinator</strong> startup knowledge base and investor
-                insights to secure funding.
+              <p className="mt-6 text-xs sm:text-lg leading-6 sm:leading-8 text-gray-700 px-4 sm:px-0">
+                Sharpen your investor pitch with real-time AI voice feedback
+                grounded in <br className="hidden sm:block" />
+                <strong>Y Combinator</strong> startup knowledge base and
+                investor insights to secure funding.
               </p>
             </div>
             <div
@@ -222,7 +222,7 @@ export default function HeroSection({ user, signInUrl, signUpUrl }) {
               )}
               {!loadingButton && (
                 <Button
-                  className="cursor-pointer bg-(--brand-secondary)"
+                  className="cursor-pointer bg-(--brand-secondary) hover:bg-[#fc7249]"
                   onClick={handleGetStarted}
                 >
                   Get Started
