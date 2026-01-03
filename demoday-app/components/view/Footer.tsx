@@ -6,6 +6,11 @@ import {
   GlobeIcon,
   LinkedInLogoIcon,
 } from "@radix-ui/react-icons";
+import {
+  GITHUB_URI,
+  LINKEDIN_URI,
+  BETTERSTACK_URI,
+} from "../../utils/Constants";
 
 const Footer = () => {
   return (
@@ -14,14 +19,15 @@ const Footer = () => {
         {/* Navigation Links */}
         <nav className="flex justify-center gap-8 mb-8">
           <Link
-            href="https://github.com"
+            href={GITHUB_URI}
             target="_blank"
             className="text-white/80 hover:text-white text-sm font-medium transition-colors"
           >
             Github
           </Link>
           <Link
-            href="/status"
+            href={BETTERSTACK_URI}
+            target="_blank"
             className="text-white/80 hover:text-white text-sm font-medium transition-colors"
           >
             Status
@@ -33,7 +39,8 @@ const Footer = () => {
             Features
           </Link>
           <Link
-            href="/contact"
+            href={LINKEDIN_URI}
+            target="_blank"
             className="text-white/80 hover:text-white text-sm font-medium transition-colors"
           >
             Contact
@@ -43,7 +50,7 @@ const Footer = () => {
         {/* Social Icons */}
         <div className="flex justify-center gap-6 mb-8">
           <Link
-            href="https://github.com"
+            href={GITHUB_URI}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/70 hover:text-white transition-colors"
@@ -52,7 +59,7 @@ const Footer = () => {
             <GitHubLogoIcon className="w-6 h-6" />
           </Link>
           <Link
-            href="https://example.com"
+            href={BETTERSTACK_URI}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/70 hover:text-white transition-colors"
@@ -61,7 +68,7 @@ const Footer = () => {
             <GlobeIcon className="w-6 h-6" />
           </Link>
           <Link
-            href="https://linkedin.com"
+            href={LINKEDIN_URI}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/70 hover:text-white transition-colors"

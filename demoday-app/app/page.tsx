@@ -17,7 +17,7 @@ export default async function Home() {
     <div>
       <HeroSection user={user} signInUrl={signInUrl} signUpUrl={signUpUrl} />
       <Features />
-      <CTA />
+      <CTA signInUrl={signInUrl} />
       <Footer />
     </div>
   );

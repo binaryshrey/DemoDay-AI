@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-const CTA = () => {
+const CTA = ({ signInUrl }: { signInUrl: string }) => {
   return (
     <div className="bg-white pt-20">
       <div className="relative isolate px-6 lg:px-8">
@@ -22,7 +22,7 @@ const CTA = () => {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
-                href="/onboard"
+                href={signInUrl}
                 className="rounded-md bg-[#FF6632] px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#FF6632] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF5319]"
               >
                 Get started
