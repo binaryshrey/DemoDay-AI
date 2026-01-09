@@ -16,7 +16,7 @@ class PitchSessionCreate(BaseModel):
 
     duration_seconds: int = Field(..., ge=1, le=3600)
     language: str
-    tone: str
+    region: str
 
     # UI uploads directly to GCS and sends these
     gcp_bucket: Optional[str] = None
@@ -55,7 +55,7 @@ class PitchSessionOut(BaseModel):
 
     duration_seconds: int
     language: str
-    tone: str
+    region: str
 
     gcp_bucket: Optional[str]
     gcp_object_path: Optional[str]

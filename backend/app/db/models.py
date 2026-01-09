@@ -33,7 +33,7 @@ class PitchSession(Base):
 
     duration_seconds = Column(Integer, nullable=False)
     language = Column(String, nullable=False)
-    tone = Column(String, nullable=False)
+    region = Column(String, nullable=False)
 
     # Provided by UI after uploading directly to GCS
     gcp_file_url = Column(Text, nullable=True)       

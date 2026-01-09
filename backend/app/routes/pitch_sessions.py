@@ -28,7 +28,7 @@ def _to_out(row: PitchSession) -> PitchSessionOut:
 
         duration_seconds=row.duration_seconds,
         language=row.language,
-        tone=row.tone,
+        region=row.region,
 
         gcp_bucket=row.gcp_bucket,
         gcp_object_path=row.gcp_object_path,
@@ -58,7 +58,7 @@ def create_pitch_session(payload: PitchSessionCreate, db: Session = Depends(get_
 
             duration_seconds=payload.duration_seconds,
             language=payload.language,
-            tone=payload.tone,
+            region=payload.region,
 
             gcp_bucket=payload.gcp_bucket,
             gcp_object_path=payload.gcp_object_path,

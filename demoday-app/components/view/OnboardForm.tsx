@@ -57,7 +57,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
     githubLink: "",
     content: "",
     language: "en",
-    tone: "professional",
+    region: "EMEA",
   });
 
   // File upload states
@@ -327,7 +327,7 @@ export default function OnboardForm({ user }: OnboardFormProps) {
         content: formData.content || "",
         duration_seconds: parseInt(duration),
         language: formData.language,
-        tone: formData.tone,
+        region: formData.region,
         gcp_bucket: uploadedFiles.length > 0 ? uploadedFiles[0].gcs_bucket : "",
         gcp_object_path:
           uploadedFiles.length > 0 ? uploadedFiles[0].gcs_object_path : "",
@@ -659,22 +659,22 @@ export default function OnboardForm({ user }: OnboardFormProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Tone</label>
+              <label className="text-sm font-medium text-gray-700">
+                Region
+              </label>
               <Select
-                value={formData.tone}
+                value={formData.region}
                 onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, tone: value }))
+                  setFormData((prev) => ({ ...prev, region: value }))
                 }
               >
                 <SelectTrigger className="w-full sm:w-44 cursor-pointer">
-                  <SelectValue placeholder="Select tone" />
+                  <SelectValue placeholder="Select Region" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                  <SelectItem value="assertive">Assertive</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="EMEA">EMEA</SelectItem>
+                  <SelectItem value="AMERS">AMERS</SelectItem>
+                  <SelectItem value="APAC">APAC</SelectItem>
                 </SelectContent>
               </Select>
             </div>
