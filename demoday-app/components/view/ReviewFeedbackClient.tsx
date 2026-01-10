@@ -9,9 +9,20 @@ import {
   Lightbulb,
   MessageSquare,
   FileText,
+  MapPin,
+  ZoomIn,
+  ZoomOut,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+  ZoomableGroup,
+} from "react-simple-maps";
 
 interface FeedbackData {
   overall_score: number;
@@ -25,6 +36,306 @@ interface FeedbackData {
   rewritten_pitch: string;
   follow_up_questions: string[];
   tts_summary: string;
+}
+
+export type Region = "AMERS" | "EMEA" | "APAC";
+
+export interface AcceleratorProgram {
+  name: string;
+  type: "Accelerator" | "VC" | "VC/Accelerator";
+  location: string;
+  coordinates: [number, number]; // [lng, lat]
+  focus?: string;
+  website?: string;
+}
+
+export const acceleratorsByRegion: Record<Region, AcceleratorProgram[]> = {
+  AMERS: [
+    {
+      name: "Y Combinator",
+      type: "Accelerator",
+      location: "Mountain View, CA, USA",
+      coordinates: [-122.0839, 37.3861],
+      focus: "Seed funding, Demo Day",
+      website: "https://www.ycombinator.com",
+    },
+    {
+      name: "Techstars",
+      type: "Accelerator",
+      location: "New York City, USA",
+      coordinates: [-73.981, 40.756],
+      focus: "Mentorship-driven accelerator",
+      website: "https://www.techstars.com",
+    },
+    {
+      name: "500 Global",
+      type: "VC",
+      location: "San Francisco, CA, USA",
+      coordinates: [-122.4194, 37.7749],
+      focus: "Seed & Series A",
+      website: "https://500.co",
+    },
+    {
+      name: "Sequoia Capital",
+      type: "VC",
+      location: "Menlo Park, CA, USA",
+      coordinates: [-122.1817, 37.4529],
+      focus: "Seed to growth stage",
+      website: "https://www.sequoiacap.com",
+    },
+    {
+      name: "Andreessen Horowitz",
+      type: "VC",
+      location: "Menlo Park, CA, USA",
+      coordinates: [-122.1817, 37.4529],
+      focus: "Seed to late-stage",
+      website: "https://a16z.com",
+    },
+  ],
+
+  EMEA: [
+    {
+      name: "Y Combinator",
+      type: "Accelerator",
+      location: "San Francisco, USA (Global intake)",
+      coordinates: [-122.38664, 37.76078],
+      focus: "Global accelerator",
+      website: "https://www.ycombinator.com",
+    },
+    {
+      name: "Seedcamp",
+      type: "VC/Accelerator",
+      location: "London, UK",
+      coordinates: [-0.1278, 51.5074],
+      focus: "Pre-seed to Series A",
+      website: "https://seedcamp.com",
+    },
+    {
+      name: "Antler",
+      type: "Accelerator",
+      location: "London, UK (EMEA hub)",
+      coordinates: [-0.1278, 51.5074],
+      focus: "Day zero to Series A",
+      website: "https://www.antler.co",
+    },
+    {
+      name: "Flat6Labs",
+      type: "Accelerator",
+      location: "Cairo, Egypt",
+      coordinates: [31.2357, 30.0444],
+      focus: "MENA early-stage startups",
+      website: "https://flat6labs.com",
+    },
+    {
+      name: "Techstars Berlin",
+      type: "Accelerator",
+      location: "Berlin, Germany",
+      coordinates: [13.405, 52.52],
+      focus: "Early-stage startups",
+      website: "https://www.techstars.com/accelerators/berlin",
+    },
+  ],
+
+  APAC: [
+    {
+      name: "Y Combinator",
+      type: "Accelerator",
+      location: "San Francisco, USA (Global intake)",
+      coordinates: [-122.38664, 37.76078],
+      focus: "Global accelerator",
+      website: "https://www.ycombinator.com",
+    },
+    {
+      name: "Antler",
+      type: "Accelerator",
+      location: "Singapore",
+      coordinates: [103.8198, 1.3521],
+      focus: "Day zero to Series A",
+      website: "https://www.antler.co",
+    },
+    {
+      name: "SOSV / Chinaccelerator",
+      type: "Accelerator",
+      location: "Shanghai, China",
+      coordinates: [121.4737, 31.2304],
+      focus: "China-focused accelerator",
+      website: "https://sosv.com/chinaccelerator",
+    },
+    {
+      name: "JFDI Asia",
+      type: "Accelerator",
+      location: "Singapore",
+      coordinates: [103.8198, 1.3521],
+      focus: "Early-stage Southeast Asia startups",
+      website: "https://jfdi.asia",
+    },
+    {
+      name: "Sequoia India & SEA",
+      type: "VC",
+      location: "Bangalore, India",
+      coordinates: [77.5946, 12.9716],
+      focus: "Seed to growth stage",
+      website: "https://www.sequoiacap.com/india",
+    },
+  ],
+};
+
+function AcceleratorMap() {
+  const [selectedRegion, setSelectedRegion] = useState<Region>("AMERS");
+  const [zoom, setZoom] = useState(1);
+
+  const regionCenters = {
+    EMEA: { center: [10, 50] as [number, number], scale: 800 },
+    AMERS: { center: [-95, 40] as [number, number], scale: 600 },
+    APAC: { center: [100, 20] as [number, number], scale: 700 },
+  };
+
+  const regionNames = {
+    EMEA: "Europe, Middle East & Africa",
+    AMERS: "Americas",
+    APAC: "Asia Pacific",
+  };
+
+  const currentConfig = regionCenters[selectedRegion];
+
+  const handleZoomIn = () => {
+    if (zoom < 8) setZoom(zoom + 0.5);
+  };
+
+  const handleZoomOut = () => {
+    if (zoom > 1) setZoom(zoom - 0.5);
+  };
+
+  return (
+    <Card className="p-4 bg-[#fffaf9] border">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-[#ff4000]" />
+          <h2 className="text-sm uppercase tracking-wide font-semibold">
+            Top Accelerators & VCs in your region -{" "}
+            {regionNames[selectedRegion]}
+          </h2>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Map */}
+        <div className="bg-white rounded-lg border border-gray-200 p-2 relative">
+          {/* Zoom Controls */}
+          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
+            <button
+              onClick={handleZoomIn}
+              disabled={zoom >= 8}
+              className="bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 rounded-lg p-2 shadow-md transition-all"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-4 h-4 text-gray-700" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              disabled={zoom <= 1}
+              className="bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 rounded-lg p-2 shadow-md transition-all"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-4 h-4 text-gray-700" />
+            </button>
+          </div>
+
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{
+              center: currentConfig.center,
+              scale: currentConfig.scale,
+            }}
+            style={{ width: "100%", height: "500px", cursor: "pointer" }}
+          >
+            <ZoomableGroup
+              zoom={zoom}
+              center={currentConfig.center}
+              minZoom={1}
+              maxZoom={8}
+            >
+              <Geographies geography="/world-110m.json">
+                {({ geographies }) =>
+                  geographies.map((geo) => (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill="#fef3f2"
+                      stroke="#ff9980"
+                      strokeWidth={0.8}
+                      style={{
+                        default: {
+                          outline: "none",
+                          fill: "#fef3f2",
+                          stroke: "#ff9980",
+                        },
+                        hover: {
+                          outline: "none",
+                          fill: "#ffe8e5",
+                          stroke: "#ff4000",
+                        },
+                        pressed: { outline: "none" },
+                      }}
+                    />
+                  ))
+                }
+              </Geographies>
+              {acceleratorsByRegion[selectedRegion].map((program, idx) => (
+                <Marker key={idx} coordinates={program.coordinates}>
+                  <circle r={5} fill="#ff4000" stroke="#fff" strokeWidth={2} />
+                  <circle
+                    r={8}
+                    fill="none"
+                    stroke="#ff4000"
+                    strokeWidth={1}
+                    opacity={0.3}
+                  />
+                  <title>{program.name}</title>
+                </Marker>
+              ))}
+            </ZoomableGroup>
+          </ComposableMap>
+        </div>
+
+        {/* List */}
+        <div
+          className="space-y-2 overflow-y-auto"
+          style={{ maxHeight: "500px" }}
+        >
+          {acceleratorsByRegion[selectedRegion].map((program, idx) => (
+            <a
+              key={idx}
+              href={program.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-3 bg-white rounded-lg border border-gray-200 hover:border-[#ff4000] hover:shadow-md transition-all cursor-pointer"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm hover:text-[#ff4000] transition-colors">
+                    {program.name}
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {program.location}
+                  </p>
+                </div>
+                <Badge
+                  variant="secondary"
+                  className="border border-[#ff4000] text-[#ff4000] rounded-full px-2 py-0.5 text-xs shrink-0"
+                >
+                  {program.type}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {program.focus}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export function FeedbackDashboard({
@@ -283,7 +594,7 @@ export function FeedbackDashboard({
         </Card>
 
         {/* Follow-up Questions */}
-        <Card className="p-4 bg-[#fffaf9] border">
+        <Card className="p-4 bg-[#fffaf9] border mb-2">
           <div className="flex items-center gap-2 ">
             <MessageSquare className="w-4 h-4 text-[#ff4000]" />
             <h2 className="text-sm uppercase tracking-wide font-semibold">
@@ -299,6 +610,9 @@ export function FeedbackDashboard({
             ))}
           </ul>
         </Card>
+
+        {/* Accelerators & VCs Map */}
+        <AcceleratorMap />
       </div>
     </div>
   );
@@ -470,7 +784,14 @@ export default function ReviewFeedbackClient({
   };
 
   if (loading) {
-    return <div className="p-6">Loading feedback…</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-[#ff4000] animate-spin" />
+          <p className="text-sm text-gray-600">Loading feedback</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

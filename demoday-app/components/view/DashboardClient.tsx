@@ -10,6 +10,7 @@ import {
   CheckCircle,
   DollarSign,
   Clock,
+  Loader2,
 } from "lucide-react";
 
 interface DashboardClientProps {
@@ -318,7 +319,10 @@ export default function DashboardClient({
                     colSpan={6}
                     className="px-6 py-8 text-center text-sm text-gray-500"
                   >
-                    Loading pitch sessions...
+                    <div className="flex items-center justify-center gap-2 flex-col">
+                      <Loader2 className="w-5 h-5 text-[#ff4000] animate-spin" />
+                      <span>Loading pitch sessions</span>
+                    </div>
                   </td>
                 </tr>
               ) : error ? (
